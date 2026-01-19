@@ -1,49 +1,25 @@
 import { describe, expect, test } from "vitest";
-import { createTailwindContext } from "../src/tw-context";
-import { initialInputList } from "../../../demo-code-sample";
+import { createTailwindContext, clearTailwindContextCache } from "../src/tw-context";
 
 describe("tw-context", () => {
-  test("createTailwindContext", () => {
-    const ctx = createTailwindContext(initialInputList["tailwind.config.js"]);
-    expect(Object.keys(ctx.context)).toMatchInlineSnapshot(`
-      [
-        "disposables",
-        "ruleCache",
-        "candidateRuleCache",
-        "classCache",
-        "applyClassCache",
-        "notClassCache",
-        "postCssNodeCache",
-        "candidateRuleMap",
-        "tailwindConfig",
-        "changedContent",
-        "variantMap",
-        "stylesheetCache",
-        "variantOptions",
-        "markInvalidUtilityCandidate",
-        "markInvalidUtilityNode",
-        "offsets",
-        "getClassOrder",
-        "getClassList",
-        "getVariants",
-      ]
-    `);
-    expect(Object.keys(ctx.config)).toMatchInlineSnapshot(
-      `
-      [
-        "theme",
-        "corePlugins",
-        "plugins",
-        "content",
-        "presets",
-        "darkMode",
-        "prefix",
-        "important",
-        "separator",
-        "safelist",
-        "blocklist",
-      ]
-    `,
-    );
+  test("createTailwindContext", async () => {
+    // Clear cache before test
+    clearTailwindContextCache();
+
+    const ctx = await createTailwindContext();
+
+    // v4 DesignSystem has a different structure than v3
+    expect(typeof ctx.context.candidatesToCss).toBe("function");
+    expect(typeof ctx.context.parseCandidate).toBe("function");
+    expect(typeof ctx.context.getClassList).toBe("function");
+    expect(typeof ctx.context.getVariants).toBe("function");
+    expect(typeof ctx.context.getClassOrder).toBe("function");
+    expect(typeof ctx.context.resolveThemeValue).toBe("function");
+
+    // Test that candidatesToCss works
+    const cssResults = ctx.context.candidatesToCss(["flex", "bg-red-500"]);
+    expect(cssResults).toHaveLength(2);
+    expect(cssResults[0]).toContain("display: flex");
+    expect(cssResults[1]).toContain("background-color:");
   });
 });

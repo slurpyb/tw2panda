@@ -21,7 +21,6 @@ pnpm-debug.log*
 .DS_Store
 
 ## Panda
-styled-system
-styled-system-static
+design-system
+design-system-static
 .vercel
-*.vsix

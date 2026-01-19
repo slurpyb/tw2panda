@@ -2,25 +2,23 @@ import { loadConfigAndCreateContext } from "@pandacss/node";
 import { PandaContext, createPandaContext } from "../panda-context";
 import { ConfigFileOptions, findPandaConfig, findTailwindConfig } from "./find-config";
 import { createTailwindContext } from "../tw-context";
-import { bundle } from "../bundle";
 
 /**
  * Load tailwind context from:
  * - configPath when provided
  * - find tailwind.config.js from file or cwd, when provided
  * - create in-memory tailwind context as fallback when no config file is found
+ *
+ * Note: In Tailwind v4, JS configs are no longer directly supported.
+ * The context is now created from CSS with the default Tailwind preset.
  */
 export async function loadTailwindContext(options: ConfigFileOptions) {
   const filePath = options.configPath ?? findTailwindConfig({ from: options.file ?? options.cwd });
 
-  if (!filePath) {
-    const tw = createTailwindContext({} as any);
-    return { context: Object.assign(tw.context, { config: tw.config }), filePath };
-  }
-
-  const result = await bundle(filePath, options.cwd);
-  const tw = createTailwindContext(result.config as any);
-  return { context: Object.assign(tw.context, { config: tw.config }), filePath };
+  // In v4, we always load from the default CSS.
+  // JS configs can be referenced via @config directive in CSS if needed.
+  const tw = await createTailwindContext();
+  return { context: tw.context, filePath };
 }
 
 /**

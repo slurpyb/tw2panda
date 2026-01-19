@@ -4,13 +4,12 @@ import { createPandaContext } from "./panda-context";
 import { mapToShorthands } from "./panda-map-to-shorthands";
 import { createTailwindContext } from "./tw-context";
 import { twClassListToPandaStyles } from "./tw-class-list-to-panda-styles";
-import { initialInputList } from "../../../demo-code-sample";
 import { RewriteOptions } from "./types";
 
-export function twClassListToPanda(classListString: string, options: RewriteOptions = { shorthands: true }) {
+export async function twClassListToPanda(classListString: string, options: RewriteOptions = { shorthands: true }) {
   const classList = new Set(classListString.split(" "));
 
-  const tw = createTailwindContext(initialInputList["tailwind.config.js"]);
+  const tw = await createTailwindContext();
   const tailwind = tw.context;
 
   const panda = createPandaContext();

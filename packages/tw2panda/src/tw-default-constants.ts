@@ -1,3 +1,53 @@
+/**
+ * Tailwind v4 utility renames mapping (v3 -> v4)
+ * Use this to help migrate code from v3 to v4 syntax
+ */
+export const TW_V3_TO_V4_RENAMES: Record<string, string> = {
+  // Shadow scale changes
+  "shadow-sm": "shadow-xs",
+  shadow: "shadow-sm",
+  // Drop shadow scale changes
+  "drop-shadow-sm": "drop-shadow-xs",
+  "drop-shadow": "drop-shadow-sm",
+  // Blur scale changes
+  "blur-sm": "blur-xs",
+  blur: "blur-sm",
+  // Backdrop blur scale changes
+  "backdrop-blur-sm": "backdrop-blur-xs",
+  "backdrop-blur": "backdrop-blur-sm",
+  // Rounded scale changes
+  "rounded-sm": "rounded-xs",
+  rounded: "rounded-sm",
+  // Outline changes
+  "outline-none": "outline-hidden",
+  // Ring default width change (3px -> 1px, use ring-3 for old behavior)
+  ring: "ring-3",
+};
+
+/**
+ * Deprecated utilities in v4 that should use opacity modifiers instead
+ * e.g., bg-opacity-50 -> bg-black/50
+ */
+export const TW_DEPRECATED_OPACITY_UTILITIES = [
+  "bg-opacity",
+  "text-opacity",
+  "border-opacity",
+  "divide-opacity",
+  "ring-opacity",
+  "placeholder-opacity",
+];
+
+/**
+ * Deprecated utilities in v4 with their replacements
+ */
+export const TW_DEPRECATED_UTILITIES: Record<string, string> = {
+  "flex-shrink": "shrink",
+  "flex-grow": "grow",
+  "overflow-ellipsis": "text-ellipsis",
+  "decoration-slice": "box-decoration-slice",
+  "decoration-clone": "box-decoration-clone",
+};
+
 /** Array.from(tw.context.variantOptions.keys()) */
 export const TW_MODIFIERS_LIST = [
   "first-letter",

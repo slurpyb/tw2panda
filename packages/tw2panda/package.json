@@ -26,7 +26,7 @@
     "directory": "packages/tw2panda"
   },
   "scripts": {
-    "start": "node ./dist/cli.cjs",
+    "start": "node ./bin.js",
     "dev": "tsup --watch",
     "build": "tsup",
     "test": "vitest",
@@ -34,6 +34,7 @@
   },
   "dependencies": {
     "@pandacss/config": "^0.7.0",
+    "@pandacss/dev": "0.6.0",
     "@pandacss/generator": "^0.7.0",
     "@pandacss/node": "^0.7.0",
     "@pandacss/parser": "^0.7.0",
@@ -48,8 +49,9 @@
     "magic-string": "^0.30.1",
     "pathe": "^1.1.1",
     "postcss": "^8.4.26",
+    "postcss-js": "^5.0.3",
     "prettier": "2.8.4",
-    "tailwindcss": "^3.3.3",
+    "tailwindcss": "^4.0.0",
     "ts-morph": "18.0.0",
     "zod": "^3.21.4"
   },
@@ -57,6 +59,7 @@
     "@pandacss/core": "^0.7.0",
     "@pandacss/token-dictionary": "^0.7.0",
     "@types/node": "^20.4.2",
+    "@types/postcss-js": "^4.1.0",
     "@types/prettier": "2.7.3",
     "rimraf": "^5.0.1",
     "tsup": "^7.1.0",

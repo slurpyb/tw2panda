@@ -9,6 +9,51 @@ import { mapToShorthands } from "./panda-map-to-shorthands";
 import { getStringLiteralText, isStringLike } from "./find-tw-class-candidates";
 import { join, relative } from "pathe";
 
+/**
+ * Tailwind marker classes that don't generate CSS but are needed for variants
+ * - `group` / `group/{name}` - for group-hover:, group-focus:, etc.
+ * - `peer` / `peer/{name}` - for peer-checked:, peer-focus:, etc.
+ */
+const TAILWIND_MARKER_CLASS_PATTERN = /^(group|peer)(\/[\w-]+)?$/;
+
+/**
+ * Check if a class is a Tailwind marker class (group, peer, etc.)
+ * These don't generate CSS but must be kept for variant selectors to work
+ */
+function isTailwindMarkerClass(cls: string): boolean {
+  return TAILWIND_MARKER_CLASS_PATTERN.test(cls);
+}
+
+/**
+ * Separate a class list into Tailwind utilities, marker classes, and custom classes
+ */
+function categorizeClasses(
+  classList: Set<string>,
+  tailwind: TailwindContext,
+): { twClasses: Set<string>; markerClasses: string[]; customClasses: string[] } {
+  const twClasses = new Set<string>();
+  const markerClasses: string[] = [];
+  const customClasses: string[] = [];
+
+  classList.forEach((cls) => {
+    // Check for Tailwind marker classes (group, peer) - keep these
+    if (isTailwindMarkerClass(cls)) {
+      markerClasses.push(cls);
+      return;
+    }
+
+    // Check if it generates CSS - if not, it's a custom class
+    const css = tailwind.candidatesToCss([cls])[0];
+    if (!css) {
+      customClasses.push(cls);
+    } else {
+      twClasses.add(cls);
+    }
+  });
+
+  return { twClasses, markerClasses, customClasses };
+}
+
 type CvaNode = { node: CallExpression; start: number; end: number; base: Node | undefined; variantsConfig: Node };
 
 const importFrom = (values: string[], mod: string) => `import { ${values.join(", ")} } from '${mod}';`;
@@ -85,19 +130,28 @@ export function rewriteTwFileContentToPanda(
       const string = getStringLiteralText(node);
       if (!string) return;
 
-      const classList = new Set(string.split(" "));
+      const classList = new Set(string.split(" ").filter(Boolean));
       if (!classList.size) return;
 
-      const styles = twClassListToPandaStyles(classList, tailwind, panda);
+      const { twClasses, markerClasses, customClasses } = categorizeClasses(classList, tailwind);
+      const classesToKeep = [...markerClasses, ...customClasses];
+
+      if (!twClasses.size) return;
+
+      const styles = twClassListToPandaStyles(twClasses, tailwind, panda);
       if (!styles.length) return;
 
       const merged = mergeCss(...styles.map((s) => s.styles));
       const styleObject = options?.shorthands ? mapToShorthands(merged, panda) : merged;
-      resultList.push({ classList: new Set(classList), styles: styleObject, node });
+      resultList.push({ classList: twClasses, styles: styleObject, node });
 
       const serializedStyles = JSON.stringify(styleObject, null);
 
-      magicStr.update(node.getStart(), node.getEnd(), `cx(css(${serializedStyles}),`);
+      // Include marker classes (group/peer) in the cx() call if present
+      const keptClassesStr = classesToKeep.map((c) => `"${c}"`).join(", ");
+      const cxArgs = keptClassesStr ? `css(${serializedStyles}), ${keptClassesStr},` : `css(${serializedStyles}),`;
+
+      magicStr.update(node.getStart(), node.getEnd(), `cx(${cxArgs}`);
       isInsideCx = true;
       imports.add("cx");
     }
@@ -111,23 +165,52 @@ export function rewriteTwFileContentToPanda(
       const string = getStringLiteralText(node);
       if (!string) return;
 
-      const classList = new Set(string.split(" "));
+      const classList = new Set(string.split(" ").filter(Boolean));
       if (!classList.size) return;
 
-      const styles = twClassListToPandaStyles(classList, tailwind, panda);
+      const { twClasses, markerClasses, customClasses } = categorizeClasses(classList, tailwind);
+      const classesToKeep = [...markerClasses, ...customClasses];
+
+      // If no Tailwind utilities, but we have classes to keep, leave them as-is
+      if (!twClasses.size) {
+        if (classesToKeep.length > 0) {
+          // Keep the string with just the marker/custom classes
+          const parent = node.getParent();
+          const replacement = `"${classesToKeep.join(" ")}"`;
+          if (Node.isJsxAttribute(parent)) {
+            magicStr.update(node.getStart(), node.getEnd(), replacement);
+          }
+        }
+        return;
+      }
+
+      const styles = twClassListToPandaStyles(twClasses, tailwind, panda);
       if (!styles.length) return;
 
       const merged = mergeCss(...styles.map((s) => s.styles));
       const styleObject = options?.shorthands ? mapToShorthands(merged, panda) : merged;
-      resultList.push({ classList: new Set(classList), styles: styleObject, node });
+      resultList.push({ classList: twClasses, styles: styleObject, node });
 
       const parent = node.getParent();
       const serializedStyles = JSON.stringify(styleObject, null);
 
       const isInsideCva = cvaNode && node.getStart() > cvaNode.start && node.getEnd() < cvaNode.end;
 
-      // if the string is inside a cva call, omit the `css()` call
-      let replacement = !isInsideCva ? `css(${serializedStyles})` : serializedStyles;
+      // Build the replacement based on context
+      let replacement: string;
+
+      if (isInsideCva) {
+        // Inside cva call, omit the css() wrapper
+        replacement = serializedStyles;
+      } else if (classesToKeep.length > 0) {
+        // Has marker classes (group/peer) or custom classes - use cx()
+        imports.add("cx");
+        const keptClassesStr = classesToKeep.map((c) => `"${c}"`).join(", ");
+        replacement = `cx(css(${serializedStyles}), ${keptClassesStr})`;
+      } else {
+        // Pure Tailwind utilities - use css() directly
+        replacement = `css(${serializedStyles})`;
+      }
 
       // if the string is inside a JSX attribute or expression, wrap it in {}
       if (!isInsideCx && Node.isJsxAttribute(parent)) {

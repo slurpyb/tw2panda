@@ -19,10 +19,18 @@ export const parseTwClassName = (
   let variantStart = 0;
   let isImportant = false;
 
-  while (index < className.length) {
-    char = className[index];
+  // Check for v4 syntax: important modifier at the end (e.g., "flex!")
+  let classNameToParse = className;
+  if (className.endsWith("!")) {
+    isImportant = true;
+    classNameToParse = className.slice(0, -1);
+  }
 
-    if (char === "!") {
+  while (index < classNameToParse.length) {
+    char = classNameToParse[index];
+
+    // v3 syntax: important modifier at the beginning (e.g., "!flex")
+    if (char === "!" && index === 0) {
       current = "";
       index++;
       isImportant = true;
@@ -48,7 +56,7 @@ export const parseTwClassName = (
     // end of arbitrary value|modifier
     if (char === "]") {
       // ending with closing bracket = arbitrary value
-      if (index === className.length - 1) {
+      if (index === classNameToParse.length - 1) {
         kind = "arbitrary-value";
         if (utility && arbitraryStart !== undefined) {
           // 'mask-type:luminance' => value = 'luminance', utility = 'mask-type'
@@ -113,7 +121,7 @@ export const parseTwClassName = (
     }
 
     // when reaching the end -> utility=value, e.g. "flex" or "underline"
-    if (className[index + 1] == undefined && allowedCandidates.includes(current)) {
+    if (classNameToParse[index + 1] == undefined && allowedCandidates.includes(current)) {
       current += char;
       utility = current;
       value = current;
@@ -142,7 +150,7 @@ export const parseTwClassName = (
 
   const item = {
     className,
-    variant: className.slice(variantStart, className[0] === "[" && char === "]" ? -1 : undefined),
+    variant: classNameToParse.slice(variantStart, classNameToParse[0] === "[" && char === "]" ? -1 : undefined),
     modifiers,
     utility,
     value,
@@ -156,7 +164,7 @@ export const parseTwClassName = (
   // "top-[117px]" -> value = "117px", utility = "top"
   // "pl-3.5" -> value = "3.5", utility = "pl"
   if (valueStart !== undefined) {
-    item.value = parseArbitraryValue(className.slice(valueStart));
+    item.value = parseArbitraryValue(classNameToParse.slice(valueStart));
   } else if (!item.utility && current) {
     // "md:max-lg:flex" -> utility = "flex"
     item.utility = current;

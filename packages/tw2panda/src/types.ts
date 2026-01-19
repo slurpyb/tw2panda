@@ -24,6 +24,8 @@ export interface TailwindClass {
 export type MatchingToken = {
   propName: string;
   tokenName: string;
+  /** The raw CSS value from Tailwind (for token fallback) */
+  rawValue: string;
   classInfo: TailwindClass;
 };
 
