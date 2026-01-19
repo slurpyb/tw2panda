@@ -10,16 +10,7 @@
 import { compile } from "tailwindcss";
 import { readFileSync } from "fs";
 import { dirname, join } from "pathe";
-import { createRequire } from "module";
-
-// Create require for resolving tailwindcss path
-const require = createRequire(import.meta.url);
-
-// Get the tailwindcss package directory
-function getTailwindDir(): string {
-  const twPath = require.resolve("tailwindcss/package.json");
-  return dirname(twPath);
-}
+import { getTailwindDir } from "./resolve-utils";
 
 // Load a stylesheet from the tailwindcss package or filesystem
 async function loadStylesheet(id: string, base: string): Promise<{ path: string; content: string; base: string }> {

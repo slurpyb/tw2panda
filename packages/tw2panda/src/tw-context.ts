@@ -1,21 +1,12 @@
 import { __unstable__loadDesignSystem, compile } from "tailwindcss";
 import { readFileSync } from "fs";
 import { dirname, join } from "pathe";
-import { createRequire } from "module";
 import type { TailwindContext } from "./tw-types";
-
-// Create require for resolving tailwindcss path
-const require = createRequire(import.meta.url);
+import { getTailwindDir } from "./resolve-utils";
 
 // Cache for the design system
 let cachedDesignSystem: TailwindContext | null = null;
 let cachedCss: string | null = null;
-
-// Get the tailwindcss package directory (root, not dist)
-function getTailwindDir(): string {
-  const twPath = require.resolve("tailwindcss/package.json");
-  return dirname(twPath);
-}
 
 // Load a stylesheet from the tailwindcss package or filesystem
 async function loadStylesheet(id: string, base: string): Promise<{ path: string; content: string; base: string }> {
