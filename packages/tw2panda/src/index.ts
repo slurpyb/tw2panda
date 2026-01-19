@@ -1,4 +1,5 @@
 export * from "./analyze-project";
+export * from "./batch-processor";
 export * from "./css-to-panda";
 export * from "./extract-components";
 export * from "./extract-tw-class-list";
@@ -15,3 +16,5 @@ export * from "./tw-parser";
 export * from "./tw-to-panda";
 export * from "./tw-types";
 export * from "./types";
+export * from "./watch";
+export * from "./interactive";

@@ -365,6 +365,15 @@ cli
 // Project analysis and token extraction
 import { analyzeProject, generateTokenConfig, generateMigrationReport, inferVariants } from "./analyze-project";
 
+// Batch processing
+import { batchProcess, formatBatchResults, generateDiff } from "./batch-processor";
+
+// Watch mode
+import { watchFiles, formatWatchEvent } from "./watch";
+
+// Interactive mode
+import { runInteractive } from "./interactive";
+
 cli
   .command("tokens [dir]", "Extract used tokens and generate minimal Panda theme config")
   .option("-s, --shorthands", "Use shorthands instead of longhand properties")
@@ -551,6 +560,188 @@ cli
         console.log(`  ✓ Wrote ${fileName}`);
       }
     }
+  });
+
+// Batch processing command
+cli
+  .command("batch <patterns...>", "Convert multiple files matching glob patterns")
+  .option("-s, --shorthands", "Use shorthands instead of longhand properties")
+  .option("-c, --config <path>", "Path to panda config file")
+  .option("-o, --out-dir <dir>", "Output directory (default: in-place)")
+  .option("-d, --dry-run", "Preview changes without writing files")
+  .option("--diff", "Show diff output for each file")
+  .option("-v, --verbose", "Show detailed output for each file")
+  .option("--ignore <patterns>", "Additional patterns to ignore (comma-separated)")
+  .option("--concurrency <n>", "Number of files to process in parallel", { default: "4" })
+  .option("--cwd <cwd>", "Current working directory", { default: cwd })
+  .action(async (inputPatterns: string | string[], _options) => {
+    // Normalize patterns to array (cac passes string for single pattern)
+    const patterns = Array.isArray(inputPatterns) ? inputPatterns : [inputPatterns];
+
+    const options = z
+      .object({
+        shorthands: z.boolean().optional(),
+        config: z.string().optional(),
+        outDir: z.string().optional(),
+        dryRun: z.boolean().optional(),
+        diff: z.boolean().optional(),
+        verbose: z.boolean().optional(),
+        ignore: z.string().optional(),
+        concurrency: z.coerce.string().default("4"),
+        cwd: z.string().default(cwd),
+      })
+      .parse(_options);
+
+    const cwdResolved = resolve(options.cwd);
+    const concurrency = parseInt(options.concurrency, 10);
+    const ignore = options.ignore?.split(",").map((p) => p.trim()) ?? [];
+
+    console.log(`\n🐼 tw2panda batch processing\n`);
+    console.log(`   Patterns: ${patterns.join(", ")}`);
+    console.log(`   Directory: ${cwdResolved}`);
+    if (options.outDir) console.log(`   Output: ${options.outDir}`);
+    if (options.dryRun) console.log(`   Mode: DRY RUN (no files will be written)`);
+    console.log("");
+
+    // Create contexts
+    const tw = await createTailwindContext();
+    const ctx = await loadPandaContext({ cwd: cwdResolved, configPath: options.config, file: "" });
+    const panda = ctx.context;
+
+    // Process files with progress
+    let lastPercent = -1;
+    const result = await batchProcess(tw.context, panda, {
+      patterns,
+      cwd: cwdResolved,
+      outDir: options.outDir,
+      shorthands: options.shorthands,
+      dryRun: options.dryRun,
+      ignore,
+      concurrency,
+      onProgress: (progress) => {
+        const percent = Math.round((progress.index / progress.total) * 100);
+        if (percent !== lastPercent) {
+          lastPercent = percent;
+          process.stdout.write(`\r   Processing: ${progress.index}/${progress.total} (${percent}%)`);
+        }
+      },
+    });
+
+    // Clear progress line
+    process.stdout.write("\r" + " ".repeat(60) + "\r");
+
+    // Show diffs if requested
+    if (options.diff) {
+      for (const file of result.files) {
+        if (file.status === "success" && file.original && file.converted) {
+          console.log("\n" + "─".repeat(60));
+          console.log(generateDiff(file.original, file.converted, file.inputPath));
+        }
+      }
+      console.log("");
+    }
+
+    // Show results
+    console.log(formatBatchResults(result, { verbose: options.verbose ?? false }));
+
+    // Exit with error code if there were failures
+    if (result.summary.errors > 0) {
+      process.exit(1);
+    }
+  });
+
+// Watch mode command
+cli
+  .command("watch <patterns...>", "Watch files and convert on change")
+  .option("-s, --shorthands", "Use shorthands instead of longhand properties")
+  .option("-c, --config <path>", "Path to panda config file")
+  .option("-o, --out-dir <dir>", "Output directory (default: in-place)")
+  .option("--ignore <patterns>", "Additional patterns to ignore (comma-separated)")
+  .option("--cwd <cwd>", "Current working directory", { default: cwd })
+  .action(async (inputPatterns: string | string[], _options) => {
+    // Normalize patterns to array
+    const patterns = Array.isArray(inputPatterns) ? inputPatterns : [inputPatterns];
+
+    const options = z
+      .object({
+        shorthands: z.boolean().optional(),
+        config: z.string().optional(),
+        outDir: z.string().optional(),
+        ignore: z.string().optional(),
+        cwd: z.string().default(cwd),
+      })
+      .parse(_options);
+
+    const cwdResolved = resolve(options.cwd);
+    const ignore = options.ignore?.split(",").map((p) => p.trim()) ?? [];
+
+    console.log(`\n🐼 tw2panda watch mode\n`);
+    console.log(`   Patterns: ${patterns.join(", ")}`);
+    console.log(`   Directory: ${cwdResolved}`);
+    if (options.outDir) console.log(`   Output: ${options.outDir}`);
+    console.log(`\n   Press Ctrl+C to stop\n`);
+
+    // Create contexts
+    const tw = await createTailwindContext();
+    const ctx = await loadPandaContext({ cwd: cwdResolved, configPath: options.config, file: "" });
+    const panda = ctx.context;
+
+    // Start watching
+    const { stop } = watchFiles(tw.context, panda, {
+      patterns,
+      cwd: cwdResolved,
+      outDir: options.outDir,
+      shorthands: options.shorthands,
+      ignore,
+      onEvent: (event) => {
+        console.log(formatWatchEvent(event));
+      },
+    });
+
+    // Handle graceful shutdown
+    const shutdown = async () => {
+      console.log("\n\n   Stopping watcher...");
+      await stop();
+      console.log("   Done.\n");
+      process.exit(0);
+    };
+
+    process.on("SIGINT", shutdown);
+    process.on("SIGTERM", shutdown);
+  });
+
+// Interactive migration wizard
+cli
+  .command("init [dir]", "Interactive migration wizard")
+  .alias("interactive")
+  .option("-s, --shorthands", "Use shorthands instead of longhand properties")
+  .option("-c, --config <path>", "Path to panda config file")
+  .option("--ignore <patterns>", "Patterns to ignore (comma-separated)")
+  .option("--cwd <cwd>", "Current working directory", { default: cwd })
+  .action(async (dir, _options) => {
+    const options = z
+      .object({
+        shorthands: z.boolean().optional(),
+        config: z.string().optional(),
+        ignore: z.string().optional(),
+        cwd: z.string().default(cwd),
+      })
+      .parse(_options);
+
+    const cwdResolved = resolve(options.cwd, dir || ".");
+    const ignore = options.ignore?.split(",").map((p) => p.trim()) ?? [];
+
+    // Create contexts
+    const tw = await createTailwindContext();
+    const ctx = await loadPandaContext({ cwd: cwdResolved, configPath: options.config, file: "" });
+    const panda = ctx.context;
+
+    // Run interactive wizard
+    await runInteractive(tw.context, panda, {
+      cwd: cwdResolved,
+      shorthands: options.shorthands,
+      ignore,
+    });
   });
 
 cli.help();
