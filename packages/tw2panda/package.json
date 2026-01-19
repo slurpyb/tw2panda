@@ -22,7 +22,7 @@
   "module": "dist/index.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/astahmer/tw2panda.git",
+    "url": "https://github.com/slurpyb/tw2panda.git",
     "directory": "packages/tw2panda"
   },
   "scripts": {
