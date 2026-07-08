@@ -24,6 +24,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-resizable-panels": "^0.0.53",
+    "tailwindcss": "^4.0.0",
     "ts-morph": "18.0.0",
     "tw2panda": "workspace:*",
     "xstate": "^4.38.1"

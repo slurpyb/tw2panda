@@ -1,5 +1,3 @@
-export * from "./analyze-project";
-export * from "./batch-processor";
 export * from "./css-to-panda";
 export * from "./extract-components";
 export * from "./extract-tw-class-list";
@@ -16,5 +14,9 @@ export * from "./tw-parser";
 export * from "./tw-to-panda";
 export * from "./tw-types";
 export * from "./types";
-export * from "./watch";
-export * from "./interactive";
+
+// NOTE: `analyze-project` / `batch-processor` (fast-glob), `watch` (chokidar) and
+// `interactive` (readline) are CLI-only and pull in Node built-ins that cannot run
+// in the browser. They are intentionally excluded from the public barrel — the CLI
+// imports them directly from their modules. This keeps the library entry point
+// browser-safe (e.g. for the web playground).

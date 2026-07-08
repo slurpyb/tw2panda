@@ -3,6 +3,30 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      Node globals polyfill. Some transitive deps (ts-morph, tailwindcss) touch
+      `process`/`global` at module-eval time. This must run before the module
+      script below, so it lives inline in <head> rather than in a bundled file.
+    -->
+    <script>
+      window.global = window.global || window;
+      window.process = window.process || {
+        env: { NODE_ENV: "production" },
+        platform: "browser",
+        browser: true,
+        argv: [],
+        version: "",
+        versions: { node: "20.0.0" },
+        nextTick: function (cb) {
+          Promise.resolve().then(cb);
+        },
+        cwd: function () {
+          return "/";
+        },
+        stdout: { write: function () {} },
+        stderr: { write: function () {} },
+      };
+    </script>
     <link rel="icon" href="favicon.svg" />
     <title>tw2panda - Tailwind to Panda CSS</title>
     <meta name="description" content="Easily migrate code from tailwind to Panda CSS" />

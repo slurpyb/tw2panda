@@ -23,4 +23,5 @@ pnpm-debug.log*
 ## Panda
 design-system
 design-system-static
+styled-system/
 .vercel

@@ -7,7 +7,7 @@ import { initialInputList, initialOutputList } from "../../../../demo-code-sampl
 
 import { createMergeCss } from "@pandacss/shared";
 
-import { createPandaContext, createTailwindContext, rewriteTwFileContentToPanda, type TwResultItem } from "tw2panda";
+import { createPandaContext, createTailwindContextSync, rewriteTwFileContentToPanda, type TwResultItem } from "tw2panda";
 import { UrlSaver } from "./url-saver";
 
 type PlaygroundContext = {
@@ -131,10 +131,16 @@ export const playgroundMachine = createMachine(
       ]),
       extractClassList: assign((ctx, event) => {
         const value = (event.type === "Update input" ? event.value : ctx.inputList[ctx.selectedInput]) ?? "";
-        const themeContent = ctx.inputList["tailwind.config.js"] ?? "module.exports = {}";
 
-        const tw = createTailwindContext(themeContent);
-        const tailwind = tw.context;
+        // Tailwind v4 is CSS-first; the design system is initialized once
+        // (see PlaygroundWithMachine) and reused synchronously here.
+        let tailwind;
+        try {
+          tailwind = createTailwindContextSync().context;
+        } catch {
+          // Design system not ready yet — skip until it is initialized.
+          return ctx;
+        }
 
         const panda = createPandaContext();
         const { mergeCss } = createMergeCss({
@@ -158,9 +164,6 @@ export const playgroundMachine = createMachine(
             })
             .join("\n\n//------------------------------------\n"),
         };
-        console.log(result);
-        console.log({ tailwind: tw, panda });
-
         // if (ctx.monaco && ctx.outputEditor) {
         //   ctx.outputEditor.setValue(output);
         // }
