@@ -1,16 +1,23 @@
 /**
- * Utilities for resolving module paths in both ESM and CJS contexts
+ * Utilities for resolving module paths in both ESM and CJS contexts.
+ *
+ * The published CLI runs as ESM (`bin.js` imports `dist/cli.js`), while the
+ * library is also consumed from CJS (`dist/index.cjs`). A bare `require.resolve`
+ * only works in CJS — in the ESM bundle esbuild replaces `require` with a shim
+ * that throws on `.resolve`. Using `createRequire(import.meta.url)` works in the
+ * ESM output natively, and in the CJS output `import.meta.url` is shimmed by tsup
+ * (`shims: true`), so a single implementation covers both.
  */
 
 import { dirname } from "pathe";
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
 
 /**
  * Resolve a module path - works in both ESM and CJS
  */
 export function resolveModule(specifier: string): string {
-  // In CJS, require is globally available
-  // In ESM bundled to CJS, this will still work because the bundler handles it
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   return require.resolve(specifier);
 }
 
