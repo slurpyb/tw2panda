@@ -9,8 +9,9 @@
  * - Migration report generation
  */
 
-import { readFileSync, existsSync, readdirSync, Dirent } from "fs";
-import { join, relative } from "pathe";
+import { readFileSync } from "fs";
+import { relative } from "pathe";
+import fg from "fast-glob";
 import { createMergeCss } from "@pandacss/shared";
 import type { PandaContext } from "./panda-context";
 import type { TailwindContext } from "./tw-types";
@@ -97,69 +98,13 @@ export interface AnalyzeOptions {
 // File Scanning
 // ============================================================================
 
-/**
- * Simple glob implementation for file matching
- */
-function matchGlob(pattern: string, filePath: string): boolean {
-  // Convert glob to regex.
-  // `**/` matches zero-or-more leading directories, so `**/*.html` must also
-  // match a file at the scan root (`card.html`, no slash) — hence `(?:.*/)?`
-  // rather than `.*/`, which would require a slash and skip root-level files.
-  // Expand the globstar placeholders LAST: they introduce `?` chars (`(?:.*/)?`)
-  // that the glob `?` -> `.` step would otherwise clobber.
-  const regexPattern = pattern
-    .replace(/\./g, "\\.")
-    .replace(/\*\*\//g, "{{GLOBSTAR_SLASH}}")
-    .replace(/\*\*/g, "{{GLOBSTAR}}")
-    .replace(/\*/g, "[^/]*")
-    .replace(/\?/g, ".")
-    .replace(/{{GLOBSTAR_SLASH}}/g, "(?:.*/)?")
-    .replace(/{{GLOBSTAR}}/g, ".*");
-
-  const regex = new RegExp(`^${regexPattern}$`);
-  return regex.test(filePath);
-}
+/** Directories never worth scanning for source files. */
+const IGNORED_DIRS = ["**/node_modules/**", "**/.git/**", "**/dist/**", "**/build/**", "**/.next/**", "**/.panda/**"];
 
 /**
- * Recursively scan directory for files matching patterns
- */
-function scanDirectory(dir: string, include: string[], exclude: string[], baseDir: string): string[] {
-  const files: string[] = [];
-
-  if (!existsSync(dir)) {
-    return files;
-  }
-
-  const entries = readdirSync(dir, { withFileTypes: true }) as Dirent[];
-
-  for (const entry of entries) {
-    const fullPath = join(dir, entry.name);
-    const relativePath = relative(baseDir, fullPath);
-
-    // Check exclusions first
-    if (exclude.some((pattern) => matchGlob(pattern, relativePath))) {
-      continue;
-    }
-
-    if (entry.isDirectory()) {
-      // Skip common non-source directories
-      if (["node_modules", ".git", "dist", "build", ".next", ".panda"].includes(entry.name)) {
-        continue;
-      }
-      files.push(...scanDirectory(fullPath, include, exclude, baseDir));
-    } else if (entry.isFile()) {
-      // Check if file matches include patterns
-      if (include.some((pattern) => matchGlob(pattern, relativePath))) {
-        files.push(fullPath);
-      }
-    }
-  }
-
-  return files;
-}
-
-/**
- * Get files matching glob patterns
+ * Get files matching the include globs, honoring exclude globs and skipping
+ * build/dependency directories. Uses fast-glob (a dependency, also used by
+ * batch-processor) so globstar matching of root-level files just works.
  */
 export function getFilesToAnalyze(cwd: string, options: AnalyzeOptions = {}): string[] {
   const {
@@ -167,7 +112,12 @@ export function getFilesToAnalyze(cwd: string, options: AnalyzeOptions = {}): st
     exclude = ["**/node_modules/**", "**/dist/**", "**/.git/**"],
   } = options;
 
-  return scanDirectory(cwd, include, exclude, cwd);
+  return fg.sync(include, {
+    cwd,
+    ignore: [...exclude, ...IGNORED_DIRS],
+    absolute: true,
+    onlyFiles: true,
+  });
 }
 
 // ============================================================================

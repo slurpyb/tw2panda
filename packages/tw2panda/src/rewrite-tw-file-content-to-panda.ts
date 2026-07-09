@@ -115,7 +115,7 @@ const unconvertedComment = (classes: string[]) => `/* TODO(tw2panda): unconverte
 const cvaValueWithUnconverted = (serialized: string, unconverted: string[]) => {
   if (!unconverted.length) return serialized;
   const comment = unconvertedComment(unconverted);
-  if (serialized === "{}" || serialized === "") return `{ ${comment} }`;
+  if (serialized === "{}") return `{ ${comment} }`;
   return serialized.replace(/\}\s*$/, ` ${comment} }`);
 };
 
@@ -255,7 +255,7 @@ export function rewriteTwFileContentToPanda(
           // object annotated with the classes that need manual conversion; for a
           // compoundVariants `class`/`className` entry, also rename the key to `css`.
           if (cvaRole === "class-list") renameCompoundVariantKey(node, magicStr);
-          magicStr.update(node.getStart(), node.getEnd(), `{ ${unconvertedComment(customClasses)} }`);
+          magicStr.update(node.getStart(), node.getEnd(), cvaValueWithUnconverted("{}", customClasses));
           return;
         }
         if (classesToKeep.length > 0) {
@@ -304,6 +304,7 @@ export function rewriteTwFileContentToPanda(
 
       // easy way, just replace the string
       // <div class="text-slate-700 dark:text-slate-500" /> => <div css={css({ color: "slate.700", dark: { color: "slate.500" } })} />
+      // (equivalent to `!isBaseArg`, but this form narrows cvaNode to defined for the code below)
       if (cvaNode?.base !== node) {
         magicStr.update(node.getStart(), node.getEnd(), replacement);
         return;

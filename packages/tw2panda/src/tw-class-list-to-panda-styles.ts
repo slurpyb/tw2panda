@@ -14,31 +14,6 @@ export interface ParsedCssProperty {
 }
 
 /**
- * Resolve a CSS variable reference to its actual value using Tailwind's theme
- * var(--text-xs) -> "0.75rem"
- * var(--color-gray-500) -> "oklch(0.551 0.027 264.364)"
- */
-function resolveCssVariable(value: string, tailwind: TailwindContext): string {
-  // Extract all var(--xxx) references and resolve them
-  const varRegex = /var\(([^)]+)\)/g;
-  let resolved = value;
-  let match;
-
-  while ((match = varRegex.exec(value)) !== null) {
-    const varName = match[1]?.trim();
-    if (!varName) continue;
-
-    // Try to resolve the variable
-    const resolvedValue = tailwind.resolveThemeValue?.(varName);
-    if (resolvedValue && !resolvedValue.includes("var(")) {
-      resolved = resolved.replace(match[0], resolvedValue);
-    }
-  }
-
-  return resolved;
-}
-
-/**
  * Extract token path from a CSS variable name
  * --color-gray-500 -> "gray.500"
  * --text-xs -> "xs"
@@ -80,6 +55,7 @@ function varNameToTokenPath(varName: string): string {
  */
 function parsePropertyInitialValues(css: string): Map<string, string> {
   const map = new Map<string, string>();
+  if (!css.includes("@property")) return map;
   const blockRegex = /@property\s+(--[\w-]+)\s*\{([^}]*)\}/g;
   let match;
   while ((match = blockRegex.exec(css)) !== null) {
@@ -217,7 +193,7 @@ function parseCssProperties(css: string, tailwind: TailwindContext): ParsedCssPr
         }
 
         // Resolve ALL var() references in the value to get the raw value
-        rawValue = resolveCssVariable(originalValue, tailwind);
+        rawValue = resolveVarValue(originalValue, lookup);
       }
     }
 
