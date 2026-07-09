@@ -312,16 +312,22 @@ function formatTokenValue(propName: string, tokenName: string, rawValue: string)
     return rawValue;
   }
 
-  // If the raw value is not resolvable (still a CSS variable), just use it directly
-  // No point wrapping in token() if the fallback won't work
+  // If the raw value is not resolvable (still a CSS variable), just use it directly.
   if (!isResolvableValue(rawValue)) {
     return rawValue;
   }
 
-  // We have a usable fallback, wrap in token()
+  // Emit a raw CSS `var()` pointing at the Panda token, with the resolved value as a
+  // fallback. `--<category>-<name>` is exactly the custom property Panda generates for
+  // `token(<category>.<name>)`, so this resolves to the token when the project defines
+  // it and falls back to the concrete value otherwise. Unlike Panda's `token(name,
+  // fallback)` string syntax, a raw `var()` is not re-escaped by Panda's value
+  // serializer — Panda >= 1.x escapes token() fallbacks (`1.25rem` -> `\31\.25rem`),
+  // yielding invalid CSS — so this stays valid across Panda versions.
   const category = PROP_TO_TOKEN_CATEGORY[propName];
   if (category) {
-    return `token(${category}.${tokenName}, ${rawValue})`;
+    const varName = `--${category}.${tokenName.replace(/!$/, "")}`.replace(/\./g, "-");
+    return `var(${varName}, ${rawValue})`;
   }
 
   // For properties without a known category, just use the raw value

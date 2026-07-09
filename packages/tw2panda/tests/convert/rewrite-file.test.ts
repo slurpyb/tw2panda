@@ -93,9 +93,11 @@ describe("rewrite-tw-file-content-to-panda", () => {
 
     const { output } = rewriteTwFileContentToPanda(input, "button.ts", twThemed, panda, mergeCss);
 
-    // With the theme, custom tokens resolve to Panda token() references...
-    expect(output).toMatch(/token\(colors\.primary,/);
-    expect(output).toMatch(/token\(colors\.destructive,/);
+    // With the theme, custom tokens resolve to Panda-token var() references
+    // (`var(--colors-primary, <fallback>)`) — raw var() rather than Panda's
+    // `token()` string syntax, which Panda >=1.x escapes into invalid CSS.
+    expect(output).toMatch(/var\(--colors-primary,/);
+    expect(output).toMatch(/var\(--colors-destructive,/);
     // ...and are no longer flagged as unconverted.
     expect(output).not.toContain("unconverted -> bg-primary");
   });
