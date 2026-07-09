@@ -1,15 +1,15 @@
 import { createMergeCss } from "@pandacss/shared";
 import { readFileSync } from "fs";
 import { describe, expect, test, beforeAll } from "vitest";
-import { createPandaContext } from "../src/panda/context";
-import { createTailwindContext, clearTailwindContextCache } from "../src/tailwind/context";
-import { rewriteTwFileContentToPanda } from "../src/convert/rewrite-file";
-import { TailwindContext } from "../src/tailwind/types";
+import { createPandaContext } from "../../src/panda/context";
+import { createTailwindContext, clearTailwindContextCache } from "../../src/tailwind/context";
+import { rewriteTwFileContentToPanda } from "../../src/convert/rewrite-file";
+import { TailwindContext } from "../../src/tailwind/types";
 
 // @ts-expect-error
-import buttonRaw from "../samples/button?raw";
+import buttonRaw from "../../samples/button?raw";
 
-const shadcnThemeRaw = readFileSync(new URL("./fixtures/shadcn-theme.css", import.meta.url), "utf-8");
+const shadcnThemeRaw = readFileSync(new URL("../fixtures/shadcn-theme.css", import.meta.url), "utf-8");
 
 describe("rewrite-tw-file-content-to-panda", () => {
   let tailwindContext: TailwindContext;

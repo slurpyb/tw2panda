@@ -69,8 +69,8 @@ pnpm format             # Prettier format all packages
 # Run all tests
 pnpm test
 
-# Run single test file
-cd packages/tw2panda && pnpm vitest run tw-parser.test.ts
+# Run single test file (tests/ mirrors the src/ layout)
+cd packages/tw2panda && pnpm vitest run tailwind/parser.test.ts
 
 # Run tests matching pattern
 cd packages/tw2panda && pnpm vitest run -t "variant with value"

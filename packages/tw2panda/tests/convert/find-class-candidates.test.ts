@@ -1,9 +1,9 @@
 import { describe, test, expect } from "vitest";
-import { createPandaContext } from "../src/panda/context";
-import { findTwClassCandidates } from "../src/convert/find-class-candidates";
-import { initialInputList } from "../../../demo-code-sample";
+import { createPandaContext } from "../../src/panda/context";
+import { findTwClassCandidates } from "../../src/convert/find-class-candidates";
+import { initialInputList } from "../../../../demo-code-sample";
 // @ts-expect-error
-import buttonRaw from "../samples/button?raw";
+import buttonRaw from "../../samples/button?raw";
 
 describe("find-tw-class-candidates", () => {
   test("samples/button.ts", () => {

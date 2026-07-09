@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { getTailwindDir, resolveModule } from "../src/shared/resolve-utils";
+import { getTailwindDir, resolveModule } from "../../src/shared/resolve-utils";
 
 /**
  * Regression guard: in the ESM build a bare `require.resolve` is replaced by
