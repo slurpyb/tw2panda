@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { evalTheme } from "../src/tw-eval-theme";
+import { evalTheme } from "../src/tailwind/eval-theme";
 import { initialInputList } from "../../../demo-code-sample";
 
 describe("tw-eval-theme", () => {

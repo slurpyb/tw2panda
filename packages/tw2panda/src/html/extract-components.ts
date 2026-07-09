@@ -11,10 +11,10 @@
  */
 
 import { createMergeCss } from "@pandacss/shared";
-import type { PandaContext } from "./panda-context";
-import type { TailwindContext } from "./tw-types";
-import { twClassListToPandaStyles } from "./tw-class-list-to-panda-styles";
-import { mapToShorthands } from "./panda-map-to-shorthands";
+import type { PandaContext } from "../panda/context";
+import type { TailwindContext } from "../tailwind/types";
+import { twClassListToPandaStyles } from "../convert/class-list-to-styles";
+import { mapToShorthands } from "../panda/map-to-shorthands";
 
 /** Slot definition for a component */
 export interface ComponentSlot {

@@ -7,8 +7,8 @@
 
 import postcss from "postcss";
 import postcssJs from "postcss-js";
-import type { PandaContext } from "./panda-context";
-import { mapToShorthands } from "./panda-map-to-shorthands";
+import type { PandaContext } from "../panda/context";
+import { mapToShorthands } from "../panda/map-to-shorthands";
 
 export interface CssToPandaOptions {
   /** Use Panda shorthand properties (bg, p, m, etc.) */

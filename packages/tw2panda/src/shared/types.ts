@@ -1,5 +1,5 @@
 import { TemplateHead } from "ts-morph";
-import { StringLike } from "./find-tw-class-candidates";
+import { StringLike } from "../convert/find-class-candidates";
 
 export type StyleObject = Record<string, any>;
 

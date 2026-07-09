@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { parseTwClassName } from "../src/tw-parser";
+import { parseTwClassName } from "../src/tailwind/parser";
 
 const parseTailwindClasses = (classList: string) =>
   classList.split(" ").map((className) => parseTwClassName(className));

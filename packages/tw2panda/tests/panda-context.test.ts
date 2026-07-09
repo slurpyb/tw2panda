@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { createPandaContext } from "../src/panda-context";
+import { createPandaContext } from "../src/panda/context";
 
 describe("panda-context", () => {
   test("createPandaContext", () => {

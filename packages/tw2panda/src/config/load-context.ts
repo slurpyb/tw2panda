@@ -1,7 +1,7 @@
 import { loadConfigAndCreateContext } from "@pandacss/node";
-import { PandaContext, createPandaContext } from "../panda-context";
+import { PandaContext, createPandaContext } from "../panda/context";
 import { ConfigFileOptions, findPandaConfig, findTailwindConfig } from "./find-config";
-import { createTailwindContext } from "../tw-context";
+import { createTailwindContext } from "../tailwind/context";
 
 /**
  * Load tailwind context from:

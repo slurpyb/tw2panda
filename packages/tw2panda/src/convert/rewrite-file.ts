@@ -1,12 +1,12 @@
-import { PandaContext } from "./panda-context";
-import { TailwindContext } from "./tw-types";
-import { prettify } from "./maybe-pretty";
+import { PandaContext } from "../panda/context";
+import { TailwindContext } from "../tailwind/types";
+import { prettify } from "../shared/maybe-pretty";
 import MagicString from "magic-string";
 import { CallExpression, Node, SourceFile, ts } from "ts-morph";
-import { RewriteOptions, StyleObject, TwResultItem } from "./types";
-import { twClassListToPandaStyles } from "./tw-class-list-to-panda-styles";
-import { mapToShorthands } from "./panda-map-to-shorthands";
-import { getStringLiteralText, isStringLike } from "./find-tw-class-candidates";
+import { RewriteOptions, StyleObject, TwResultItem } from "../shared/types";
+import { twClassListToPandaStyles } from "./class-list-to-styles";
+import { mapToShorthands } from "../panda/map-to-shorthands";
+import { getStringLiteralText, isStringLike } from "./find-class-candidates";
 import { join, relative } from "pathe";
 
 /**
@@ -322,7 +322,10 @@ export function rewriteTwFileContentToPanda(
       }
 
       // merge 1st arg of `class-variance-authority` with its 2nd arg, move 1st arg inside panda's cva `base` key
-      magicStr.appendLeft(variantsConfig.getStart() + 1, `base: ${cvaValueWithUnconverted(serializedStyles, customClasses)}, `);
+      magicStr.appendLeft(
+        variantsConfig.getStart() + 1,
+        `base: ${cvaValueWithUnconverted(serializedStyles, customClasses)}, `,
+      );
 
       // rm trailing comma
       magicStr.remove(node.getStart(), node.getEnd());

@@ -1,10 +1,10 @@
 import { createMergeCss } from "@pandacss/shared";
 
-import { createPandaContext } from "./panda-context";
-import { mapToShorthands } from "./panda-map-to-shorthands";
-import { createTailwindContext } from "./tw-context";
-import { twClassListToPandaStyles } from "./tw-class-list-to-panda-styles";
-import { RewriteOptions } from "./types";
+import { createPandaContext } from "../panda/context";
+import { mapToShorthands } from "../panda/map-to-shorthands";
+import { createTailwindContext } from "../tailwind/context";
+import { twClassListToPandaStyles } from "./class-list-to-styles";
+import { RewriteOptions } from "../shared/types";
 
 export async function twClassListToPanda(classListString: string, options: RewriteOptions = { shorthands: true }) {
   const classList = new Set(classListString.split(" "));

@@ -9,10 +9,10 @@
  */
 
 import { createInterface, Interface } from "readline";
-import type { PandaContext } from "./panda-context";
-import type { TailwindContext } from "./tw-types";
-import { analyzeProject, ProjectAnalysis } from "./analyze-project";
-import { batchProcess, BatchResult, generateDiff } from "./batch-processor";
+import type { PandaContext } from "../panda/context";
+import type { TailwindContext } from "../tailwind/types";
+import { analyzeProject, ProjectAnalysis } from "../analyze/project";
+import { batchProcess, BatchResult, generateDiff } from "./batch";
 
 // ============================================================================
 // Types

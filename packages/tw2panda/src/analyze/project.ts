@@ -13,11 +13,11 @@ import { readFileSync } from "fs";
 import { relative } from "pathe";
 import fg from "fast-glob";
 import { createMergeCss } from "@pandacss/shared";
-import type { PandaContext } from "./panda-context";
-import type { TailwindContext } from "./tw-types";
-import { twClassListToPandaStyles } from "./tw-class-list-to-panda-styles";
-import { mapToShorthands } from "./panda-map-to-shorthands";
-import type { StyleObject } from "./types";
+import type { PandaContext } from "../panda/context";
+import type { TailwindContext } from "../tailwind/types";
+import { twClassListToPandaStyles } from "../convert/class-list-to-styles";
+import { mapToShorthands } from "../panda/map-to-shorthands";
+import type { StyleObject } from "../shared/types";
 
 // ============================================================================
 // Types

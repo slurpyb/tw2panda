@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { createTailwindContext, clearTailwindContextCache } from "../src/tw-context";
+import { createTailwindContext, clearTailwindContextCache } from "../src/tailwind/context";
 
 describe("tw-context", () => {
   test("createTailwindContext", async () => {

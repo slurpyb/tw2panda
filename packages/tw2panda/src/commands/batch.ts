@@ -13,12 +13,12 @@ import { readFileSync } from "fs";
 import { writeFile, mkdir } from "fs/promises";
 import { join, dirname, extname, basename } from "pathe";
 import { createMergeCss } from "@pandacss/shared";
-import type { PandaContext } from "./panda-context";
-import type { TailwindContext } from "./tw-types";
-import { rewriteTwFileContentToPanda } from "./rewrite-tw-file-content-to-panda";
-import { rewriteHtmlToPanda } from "./rewrite-html-to-panda";
-import { maybePretty } from "./maybe-pretty";
-import type { RewriteOptions } from "./types";
+import type { PandaContext } from "../panda/context";
+import type { TailwindContext } from "../tailwind/types";
+import { rewriteTwFileContentToPanda } from "../convert/rewrite-file";
+import { rewriteHtmlToPanda } from "../html/rewrite";
+import { maybePretty } from "../shared/maybe-pretty";
+import type { RewriteOptions } from "../shared/types";
 
 // ============================================================================
 // Types

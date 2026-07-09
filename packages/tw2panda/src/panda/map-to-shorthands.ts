@@ -1,6 +1,6 @@
-import { PandaContext } from "./panda-context";
+import { PandaContext } from "./context";
 import { walkObject } from "@pandacss/shared";
-import { StyleObject } from "./types";
+import { StyleObject } from "../shared/types";
 
 /** Takes a style object and map each CSS property to its shorthand */
 export function mapToShorthands(styles: StyleObject, context: PandaContext) {

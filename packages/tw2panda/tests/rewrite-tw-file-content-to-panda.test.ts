@@ -1,10 +1,10 @@
 import { createMergeCss } from "@pandacss/shared";
 import { readFileSync } from "fs";
 import { describe, expect, test, beforeAll } from "vitest";
-import { createPandaContext } from "../src/panda-context";
-import { createTailwindContext, clearTailwindContextCache } from "../src/tw-context";
-import { rewriteTwFileContentToPanda } from "../src/rewrite-tw-file-content-to-panda";
-import { TailwindContext } from "../src/tw-types";
+import { createPandaContext } from "../src/panda/context";
+import { createTailwindContext, clearTailwindContextCache } from "../src/tailwind/context";
+import { rewriteTwFileContentToPanda } from "../src/convert/rewrite-file";
+import { TailwindContext } from "../src/tailwind/types";
 
 // @ts-expect-error
 import buttonRaw from "../samples/button?raw";

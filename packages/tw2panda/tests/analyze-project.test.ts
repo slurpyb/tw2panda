@@ -2,7 +2,7 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "pathe";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { getFilesToAnalyze } from "../src/analyze-project";
+import { getFilesToAnalyze } from "../src/analyze/project";
 
 /**
  * Regression guard for the hand-rolled glob: `**\/*.tsx` must match a file at

@@ -5,12 +5,12 @@
  */
 
 import { createMergeCss } from "@pandacss/shared";
-import type { PandaContext } from "./panda-context";
-import { twClassListToPandaStyles } from "./tw-class-list-to-panda-styles";
-import { mapToShorthands } from "./panda-map-to-shorthands";
-import { extractBodyContent, extractClassAttributes, htmlToJsx, toPascalCase } from "./html-to-jsx";
-import type { TailwindContext } from "./tw-types";
-import type { RewriteOptions } from "./types";
+import type { PandaContext } from "../panda/context";
+import { twClassListToPandaStyles } from "../convert/class-list-to-styles";
+import { mapToShorthands } from "../panda/map-to-shorthands";
+import { extractBodyContent, extractClassAttributes, htmlToJsx, toPascalCase } from "./to-jsx";
+import type { TailwindContext } from "../tailwind/types";
+import type { RewriteOptions } from "../shared/types";
 
 export interface HtmlToPandaOptions extends RewriteOptions {
   /** Component name (defaults to PascalCase of filename) */

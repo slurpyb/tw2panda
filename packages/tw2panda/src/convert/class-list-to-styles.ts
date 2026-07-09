@@ -1,7 +1,7 @@
-import { PandaContext } from "./panda-context";
-import { parseTwClassName } from "./tw-parser";
-import { TailwindContext } from "./tw-types";
-import { MatchingToken, StyleObject } from "./types";
+import { PandaContext } from "../panda/context";
+import { parseTwClassName } from "../tailwind/parser";
+import { TailwindContext } from "../tailwind/types";
+import { MatchingToken, StyleObject } from "../shared/types";
 
 const kebabToCamel = (str: string) => str.replace(/(-\w)/g, (group) => (group[1] ?? "").toUpperCase());
 

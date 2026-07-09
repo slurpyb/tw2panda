@@ -1,10 +1,10 @@
 import { createMergeCss } from "@pandacss/shared";
 import { describe, expect, test, beforeAll } from "vitest";
-import { extractTwFileClassList } from "../src/extract-tw-class-list";
-import { createPandaContext } from "../src/panda-context";
-import { createTailwindContext, clearTailwindContextCache } from "../src/tw-context";
-import { twClassListToPandaStyles } from "../src/tw-class-list-to-panda-styles";
-import { TailwindContext } from "../src/tw-types";
+import { extractTwFileClassList } from "../src/convert/extract-class-list";
+import { createPandaContext } from "../src/panda/context";
+import { createTailwindContext, clearTailwindContextCache } from "../src/tailwind/context";
+import { twClassListToPandaStyles } from "../src/convert/class-list-to-styles";
+import { TailwindContext } from "../src/tailwind/types";
 
 // @ts-expect-error
 import buttonRaw from "../samples/button?raw";

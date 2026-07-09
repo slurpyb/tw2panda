@@ -1,8 +1,8 @@
 import { __unstable__loadDesignSystem, compile } from "tailwindcss";
 import { readFileSync } from "fs";
 import { dirname, join } from "pathe";
-import type { TailwindContext } from "./tw-types";
-import { getTailwindDir } from "./resolve-utils";
+import type { TailwindContext } from "./types";
+import { getTailwindDir } from "../shared/resolve-utils";
 
 // Cache for the design system
 let cachedDesignSystem: TailwindContext | null = null;

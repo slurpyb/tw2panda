@@ -16,6 +16,41 @@ tw2panda/
 └── package.json      # Root workspace config
 ```
 
+### Core package layout (`packages/tw2panda/src`)
+
+Organized by role in the Tailwind → Panda pipeline. `index.ts`, `cli.ts`, and
+`config.ts` are the build entry points (tsup) and stay at the `src/` root.
+
+```
+src/
+├── index.ts            # public API barrel
+├── cli.ts              # CLI definition (cac); bin.js -> dist/cli.js
+├── config.ts           # `tw2panda/config` entry
+├── tailwind/           # Tailwind input: design-system context, parser, theme
+│   ├── context.ts      # loads the v4 design system, resolves classes -> CSS
+│   ├── parser.ts       # parses tw class syntax (modifiers, values, arbitrary)
+│   ├── generate-theme-css.ts
+│   ├── default-constants.ts · eval-theme.ts · types.ts
+├── panda/              # Panda output
+│   ├── context.ts      # sets up Panda for output generation
+│   └── map-to-shorthands.ts
+├── convert/            # core tw -> panda conversion
+│   ├── class-list-to-styles.ts   # class list -> Panda style object
+│   ├── rewrite-file.ts           # rewrite a file's classes + cva (ts-morph AST)
+│   ├── to-panda.ts · css.ts · extract-class-list.ts
+│   └── find-class-candidates.ts · postcss-find-rule-props.ts
+├── html/               # HTML/JSX -> Panda TSX
+│   └── to-jsx.ts · rewrite.ts · extract-components.ts
+├── analyze/            # project analysis (tokens / report / infer)
+│   └── project.ts
+├── commands/           # CLI orchestration
+│   └── batch.ts · watch.ts · interactive.ts
+├── config/             # panda/tailwind config loading
+│   └── find-config.ts · load-context.ts
+└── shared/             # cross-cutting primitives
+    └── types.ts · maybe-pretty.ts · resolve-utils.ts · create-project.ts · bundle.ts
+```
+
 ---
 
 ## Commands
@@ -139,8 +174,8 @@ export interface TailwindClass { ... }
 
 - **camelCase**: functions, variables, parameters
 - **PascalCase**: types, interfaces, classes
-- **kebab-case**: file names (`tw-parser.ts`, `tw-context.ts`)
-- **Descriptive prefixes**: `tw-` for Tailwind, `panda-` for Panda CSS
+- **kebab-case**: file names (`class-list-to-styles.ts`, `map-to-shorthands.ts`)
+- **Directory namespacing**: group by role (`tailwind/`, `panda/`, `convert/`, `html/`, `analyze/`, `commands/`, `config/`, `shared/`) instead of filename prefixes — a file's directory says whether it's Tailwind or Panda side
 
 ### Functions
 
@@ -263,10 +298,16 @@ expect.addSnapshotSerializer({
 
 ## Architecture Notes
 
-1. **Tailwind Context** (`tw-context.ts`): Wraps internal Tailwind APIs to resolve class names to CSS
-2. **Parser** (`tw-parser.ts`): Parses Tailwind class syntax (modifiers, values, arbitrary values)
-3. **Panda Context** (`panda-context.ts`): Sets up Panda CSS for output generation
-4. **Rewriter** (`rewrite-tw-file-content-to-panda.ts`): Main transformation using ts-morph AST
+The pipeline flows Tailwind input → conversion → Panda output. Each layer is a
+directory under `src/` (see Core package layout above):
+
+1. **Tailwind Context** (`tailwind/context.ts`): Loads the v4 design system and resolves class names to CSS
+2. **Parser** (`tailwind/parser.ts`): Parses Tailwind class syntax (modifiers, values, arbitrary values)
+3. **Panda Context** (`panda/context.ts`): Sets up Panda CSS for output generation
+4. **Conversion core** (`convert/`): `class-list-to-styles.ts` turns resolved classes into Panda style objects; `rewrite-file.ts` rewrites file content + `cva` via ts-morph AST
+5. **Surfaces** (`html/`, `analyze/`, `commands/`): HTML→TSX conversion, project analysis, and CLI orchestration built on top of the core
+
+Dependency direction: `commands` → `convert`/`html`/`analyze` → `tailwind`/`panda` → `shared`. Nothing in `tailwind`/`panda`/`shared` imports upward.
 
 ---
 

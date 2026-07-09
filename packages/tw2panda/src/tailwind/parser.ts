@@ -1,5 +1,5 @@
-import { TW_CANDIDATE_RULE_LIST, TW_MODIFIERS_LIST } from "./tw-default-constants";
-import { TailwindClass } from "./types";
+import { TW_CANDIDATE_RULE_LIST, TW_MODIFIERS_LIST } from "./default-constants";
+import { TailwindClass } from "../shared/types";
 
 export const parseTwClassName = (
   className: string,

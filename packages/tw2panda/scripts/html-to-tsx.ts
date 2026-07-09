@@ -14,10 +14,10 @@
 import { readFileSync, writeFileSync } from "fs";
 import { resolve, basename, extname } from "pathe";
 import { createMergeCss } from "@pandacss/shared";
-import { createTailwindContext } from "../src/tw-context";
-import { createPandaContext } from "../src/panda-context";
-import { rewriteHtmlToPanda } from "../src/rewrite-html-to-panda";
-import { maybePretty } from "../src/maybe-pretty";
+import { createTailwindContext } from "../src/tailwind/context";
+import { createPandaContext } from "../src/panda/context";
+import { rewriteHtmlToPanda } from "../src/html/rewrite";
+import { maybePretty } from "../src/shared/maybe-pretty";
 
 interface Options {
   shorthands?: boolean;

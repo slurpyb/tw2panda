@@ -1,6 +1,6 @@
 import { describe, test, expect } from "vitest";
-import { createPandaContext } from "../src/panda-context";
-import { findTwClassCandidates } from "../src/find-tw-class-candidates";
+import { createPandaContext } from "../src/panda/context";
+import { findTwClassCandidates } from "../src/convert/find-class-candidates";
 import { initialInputList } from "../../../demo-code-sample";
 // @ts-expect-error
 import buttonRaw from "../samples/button?raw";

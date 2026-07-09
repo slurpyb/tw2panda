@@ -1,9 +1,9 @@
-import { findTwClassCandidates } from "./find-tw-class-candidates";
-import { PandaContext } from "./panda-context";
-import { mapToShorthands } from "./panda-map-to-shorthands";
-import { TailwindContext } from "./tw-types";
-import { RewriteOptions, StyleObject, TwResultItem } from "./types";
-import { twClassListToPandaStyles } from "./tw-class-list-to-panda-styles";
+import { findTwClassCandidates } from "./find-class-candidates";
+import { PandaContext } from "../panda/context";
+import { mapToShorthands } from "../panda/map-to-shorthands";
+import { TailwindContext } from "../tailwind/types";
+import { RewriteOptions, StyleObject, TwResultItem } from "../shared/types";
+import { twClassListToPandaStyles } from "./class-list-to-styles";
 
 /**
  *  Returns a list of `TwResultItem`, which is a mapping of:

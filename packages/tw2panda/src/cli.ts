@@ -2,19 +2,19 @@ import { createMergeCss } from "@pandacss/shared";
 import { cac } from "cac";
 import { readFileSync } from "fs";
 import { basename, extname, join, resolve } from "pathe";
-import { extractTwFileClassList } from "./extract-tw-class-list";
-import { rewriteTwFileContentToPanda } from "./rewrite-tw-file-content-to-panda";
-import { rewriteHtmlToPanda } from "./rewrite-html-to-panda";
-import { generateTailwindThemeCss, generateThemeVariablesOnly } from "./generate-tailwind-theme-css";
-import { createTailwindContext } from "./tw-context";
-import { createPandaContext } from "./panda-context";
-import { twClassListToPanda } from "./tw-to-panda";
-import { maybePretty } from "./maybe-pretty";
+import { extractTwFileClassList } from "./convert/extract-class-list";
+import { rewriteTwFileContentToPanda } from "./convert/rewrite-file";
+import { rewriteHtmlToPanda } from "./html/rewrite";
+import { generateTailwindThemeCss, generateThemeVariablesOnly } from "./tailwind/generate-theme-css";
+import { createTailwindContext } from "./tailwind/context";
+import { createPandaContext } from "./panda/context";
+import { twClassListToPanda } from "./convert/to-panda";
+import { maybePretty } from "./shared/maybe-pretty";
 import { z } from "zod";
 
 import { name, version } from "../package.json";
 import { writeFile } from "fs/promises";
-import { RewriteOptions } from "./types";
+import { RewriteOptions } from "./shared/types";
 import { loadPandaContext } from "./config/load-context";
 
 const DEFAULT_THEME_OUTPUT = "tailwind-theme.css";
@@ -224,7 +224,7 @@ cli
   });
 
 // CSS to Panda conversion
-import { cssToPanda, cssToGlobalCss, cssToRecipe } from "./css-to-panda";
+import { cssToPanda, cssToGlobalCss, cssToRecipe } from "./convert/css";
 
 cli
   .command("css <file>", "Convert raw CSS to Panda-compatible style object")
@@ -294,7 +294,7 @@ cli
   });
 
 // Component extraction from HTML
-import { htmlToSlotRecipes } from "./extract-components";
+import { htmlToSlotRecipes } from "./html/extract-components";
 
 cli
   .command("components <file>", "Extract components from HTML and generate Panda slot recipes")
@@ -374,16 +374,16 @@ cli
   });
 
 // Project analysis and token extraction
-import { analyzeProject, generateTokenConfig, generateMigrationReport, inferVariants } from "./analyze-project";
+import { analyzeProject, generateTokenConfig, generateMigrationReport, inferVariants } from "./analyze/project";
 
 // Batch processing
-import { batchProcess, formatBatchResults, generateDiff } from "./batch-processor";
+import { batchProcess, formatBatchResults, generateDiff } from "./commands/batch";
 
 // Watch mode
-import { watchFiles, formatWatchEvent } from "./watch";
+import { watchFiles, formatWatchEvent } from "./commands/watch";
 
 // Interactive mode
-import { runInteractive } from "./interactive";
+import { runInteractive } from "./commands/interactive";
 
 cli
   .command("tokens [dir]", "Extract used tokens and generate minimal Panda theme config")

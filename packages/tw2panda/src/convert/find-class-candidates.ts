@@ -1,5 +1,5 @@
 import { NoSubstitutionTemplateLiteral, Node, SourceFile, StringLiteral, TemplateHead } from "ts-morph";
-import { PandaContext } from "./panda-context";
+import { PandaContext } from "../panda/context";
 
 /** Finds all tailwind class candidates in a file
  * -> returns the list of all StringLiteral AST nodes */
