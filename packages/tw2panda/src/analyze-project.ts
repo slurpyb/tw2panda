@@ -101,13 +101,20 @@ export interface AnalyzeOptions {
  * Simple glob implementation for file matching
  */
 function matchGlob(pattern: string, filePath: string): boolean {
-  // Convert glob to regex
+  // Convert glob to regex.
+  // `**/` matches zero-or-more leading directories, so `**/*.html` must also
+  // match a file at the scan root (`card.html`, no slash) — hence `(?:.*/)?`
+  // rather than `.*/`, which would require a slash and skip root-level files.
+  // Expand the globstar placeholders LAST: they introduce `?` chars (`(?:.*/)?`)
+  // that the glob `?` -> `.` step would otherwise clobber.
   const regexPattern = pattern
     .replace(/\./g, "\\.")
+    .replace(/\*\*\//g, "{{GLOBSTAR_SLASH}}")
     .replace(/\*\*/g, "{{GLOBSTAR}}")
     .replace(/\*/g, "[^/]*")
-    .replace(/{{GLOBSTAR}}/g, ".*")
-    .replace(/\?/g, ".");
+    .replace(/\?/g, ".")
+    .replace(/{{GLOBSTAR_SLASH}}/g, "(?:.*/)?")
+    .replace(/{{GLOBSTAR}}/g, ".*");
 
   const regex = new RegExp(`^${regexPattern}$`);
   return regex.test(filePath);

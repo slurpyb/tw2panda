@@ -25,6 +25,48 @@ function isTailwindMarkerClass(cls: string): boolean {
 }
 
 /**
+ * Classify a string literal found inside a `cva()` call so the converter treats it
+ * correctly:
+ * - "variant-ref": a variant-name reference, not a class list. Covers `defaultVariants`
+ *   values (`variant: "default"`) and the condition keys of `compoundVariants`
+ *   (`{ variant: "default", size: "lg", class: "..." }`). Left untouched.
+ * - "class-list": the `class`/`className` value of a `compoundVariants` entry — a real
+ *   class list whose key must also be renamed to Panda's `css`.
+ * - "normal": base styles and ordinary variant values — the default conversion.
+ */
+type CvaStringRole = "variant-ref" | "class-list" | "normal";
+
+function getCvaStringRole(node: Node): CvaStringRole {
+  const immediate = node.getParent();
+  const immediateKey = Node.isPropertyAssignment(immediate) ? immediate.getName() : undefined;
+
+  let current: Node | undefined = immediate;
+  while (current && !Node.isCallExpression(current)) {
+    if (Node.isPropertyAssignment(current)) {
+      const name = current.getName();
+      if (name === "defaultVariants") return "variant-ref";
+      if (name === "compoundVariants") {
+        return immediateKey === "class" || immediateKey === "className" ? "class-list" : "variant-ref";
+      }
+    }
+    current = current.getParent();
+  }
+  return "normal";
+}
+
+/**
+ * Rename a `compoundVariants` entry's `class`/`className` key to Panda's `css`, so the
+ * converted style object sits under the key Panda expects.
+ */
+function renameCompoundVariantKey(node: Node, magicStr: MagicString): void {
+  const parent = node.getParent();
+  if (Node.isPropertyAssignment(parent)) {
+    const nameNode = parent.getNameNode();
+    magicStr.update(nameNode.getStart(), nameNode.getEnd(), "css");
+  }
+}
+
+/**
  * Separate a class list into Tailwind utilities, marker classes, and custom classes
  */
 function categorizeClasses(
@@ -57,6 +99,25 @@ function categorizeClasses(
 type CvaNode = { node: CallExpression; start: number; end: number; base: Node | undefined; variantsConfig: Node };
 
 const importFrom = (values: string[], mod: string) => `import { ${values.join(", ")} } from '${mod}';`;
+
+/**
+ * A comment flagging classes that couldn't be converted (custom utilities not in the
+ * resolved theme, e.g. shadcn's `bg-primary`). Keeps them visible for manual work
+ * instead of silently dropping them or leaving an invalid raw string in the output.
+ */
+const unconvertedComment = (classes: string[]) => `/* TODO(tw2panda): unconverted -> ${classes.join(" ")} */`;
+
+/**
+ * Build a valid cva value, appending an "unconverted" annotation when some classes
+ * in the original string couldn't be converted. Panda cva values must be style
+ * objects, never raw class strings.
+ */
+const cvaValueWithUnconverted = (serialized: string, unconverted: string[]) => {
+  if (!unconverted.length) return serialized;
+  const comment = unconvertedComment(unconverted);
+  if (serialized === "{}" || serialized === "") return `{ ${comment} }`;
+  return serialized.replace(/\}\s*$/, ` ${comment} }`);
+};
 
 /**
  * Parse a file content, replace Tailwind classes with Panda styles object
@@ -110,6 +171,14 @@ export function rewriteTwFileContentToPanda(
             const VariantPropsNode = elements.find((e) => e.getName() === "VariantProps");
             if (VariantPropsNode) {
               magicStr.update(VariantPropsNode.getStart(), VariantPropsNode.getEnd(), "type RecipeVariantProps");
+              // Rename usages too (e.g. `VariantProps<typeof buttonVariants>`), otherwise the
+              // converted file references a name that is no longer imported.
+              const nameNode = VariantPropsNode.getNameNode();
+              nameNode.findReferencesAsNodes().forEach((ref) => {
+                // Skip the import specifier declaration itself
+                if (ref.getStart() >= node.getStart() && ref.getEnd() <= node.getEnd()) return;
+                magicStr.update(ref.getStart(), ref.getEnd(), "RecipeVariantProps");
+              });
             }
           }
         }
@@ -171,8 +240,24 @@ export function rewriteTwFileContentToPanda(
       const { twClasses, markerClasses, customClasses } = categorizeClasses(classList, tailwind);
       const classesToKeep = [...markerClasses, ...customClasses];
 
+      const isInsideCva = Boolean(cvaNode && node.getStart() > cvaNode.start && node.getEnd() < cvaNode.end);
+      const isBaseArg = cvaNode?.base === node;
+      const cvaRole = isInsideCva && !isBaseArg ? getCvaStringRole(node) : "normal";
+
+      // Variant-name references (defaultVariants values, compoundVariants conditions)
+      // are not class lists — leave them exactly as they are.
+      if (cvaRole === "variant-ref") return;
+
       // If no Tailwind utilities, but we have classes to keep, leave them as-is
       if (!twClasses.size) {
+        if (isInsideCva && !isBaseArg && customClasses.length > 0) {
+          // A cva value must be a style object, not a raw class string. Emit an empty
+          // object annotated with the classes that need manual conversion; for a
+          // compoundVariants `class`/`className` entry, also rename the key to `css`.
+          if (cvaRole === "class-list") renameCompoundVariantKey(node, magicStr);
+          magicStr.update(node.getStart(), node.getEnd(), `{ ${unconvertedComment(customClasses)} }`);
+          return;
+        }
         if (classesToKeep.length > 0) {
           // Keep the string with just the marker/custom classes
           const parent = node.getParent();
@@ -194,14 +279,14 @@ export function rewriteTwFileContentToPanda(
       const parent = node.getParent();
       const serializedStyles = JSON.stringify(styleObject, null);
 
-      const isInsideCva = cvaNode && node.getStart() > cvaNode.start && node.getEnd() < cvaNode.end;
-
       // Build the replacement based on context
       let replacement: string;
 
       if (isInsideCva) {
-        // Inside cva call, omit the css() wrapper
-        replacement = serializedStyles;
+        // Inside cva call, omit the css() wrapper; annotate any dropped custom classes
+        replacement = cvaValueWithUnconverted(serializedStyles, customClasses);
+        // compoundVariants: rename the `class`/`className` key to Panda's `css`
+        if (cvaRole === "class-list") renameCompoundVariantKey(node, magicStr);
       } else if (classesToKeep.length > 0) {
         // Has marker classes (group/peer) or custom classes - use cx()
         imports.add("cx");
@@ -236,7 +321,7 @@ export function rewriteTwFileContentToPanda(
       }
 
       // merge 1st arg of `class-variance-authority` with its 2nd arg, move 1st arg inside panda's cva `base` key
-      magicStr.appendLeft(variantsConfig.getStart() + 1, `base: ${serializedStyles}, `);
+      magicStr.appendLeft(variantsConfig.getStart() + 1, `base: ${cvaValueWithUnconverted(serializedStyles, customClasses)}, `);
 
       // rm trailing comma
       magicStr.remove(node.getStart(), node.getEnd());

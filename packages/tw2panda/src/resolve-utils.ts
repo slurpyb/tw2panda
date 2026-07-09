@@ -9,8 +9,8 @@
  * (`shims: true`), so a single implementation covers both.
  */
 
+import { createRequire } from "node:module";
 import { dirname } from "pathe";
-import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
 

@@ -74,12 +74,96 @@ function varNameToTokenPath(varName: string): string {
 }
 
 /**
+ * Parse `@property --x { initial-value: y }` blocks into a name -> initial value map.
+ * Tailwind v4 registers its internal `--tw-*` vars this way; the initial value is
+ * what they fall back to in a project without Tailwind's runtime (i.e. Panda).
+ */
+function parsePropertyInitialValues(css: string): Map<string, string> {
+  const map = new Map<string, string>();
+  const blockRegex = /@property\s+(--[\w-]+)\s*\{([^}]*)\}/g;
+  let match;
+  while ((match = blockRegex.exec(css)) !== null) {
+    const name = match[1];
+    const initial = (match[2] ?? "").match(/initial-value\s*:\s*([^;]+);/);
+    if (name && initial?.[1]) {
+      map.set(name, initial[1].trim());
+    }
+  }
+  return map;
+}
+
+/**
+ * Resolve a CSS value's `var()` references (including nested fallbacks) to concrete
+ * values. Unresolvable references are left as `var(--name)` so callers can detect them.
+ */
+function resolveVarValue(value: string, lookup: (name: string) => string | undefined): string {
+  let i = 0;
+  const parseUntil = (stops: string): string => {
+    let out = "";
+    while (i < value.length && !stops.includes(value[i]!)) {
+      if (value.startsWith("var(", i)) {
+        i += 4;
+        let name = "";
+        while (i < value.length && value[i] !== "," && value[i] !== ")") name += value[i++];
+        name = name.trim();
+        let fallback = "";
+        if (value[i] === ",") {
+          i++;
+          fallback = parseUntil(")");
+        }
+        if (value[i] === ")") i++;
+        const resolved = lookup(name);
+        if (resolved != null) out += resolved;
+        else if (fallback.trim()) out += fallback.trim();
+        else out += `var(${name})`;
+      } else {
+        out += value[i++];
+      }
+    }
+    return out;
+  };
+  return parseUntil("").trim();
+}
+
+/**
+ * A resolved value that can't be represented as a Panda style: it still contains
+ * Tailwind's internal `--tw-*` plumbing, or it's a no-op shadow composite (the
+ * ring/shadow system resolved to only transparent layers).
+ */
+function isUnrepresentableValue(value: string): boolean {
+  if (value.includes("var(--tw-")) return true;
+  const layers = value.split(",").map((s) => s.trim());
+  return layers.length > 0 && layers.every((l) => l === "0 0 #0000");
+}
+
+/**
+ * Strip bare Tailwind-internal list items (e.g. `--tw-gradient-from`) from a
+ * comma-separated value such as `transition-property`. These are plumbing that
+ * Panda doesn't register; the guard keeps the function inert for normal values
+ * (including function values like `cubic-bezier(...)` that merely contain commas).
+ */
+function stripInternalListItems(value: string): string {
+  if (!value.includes(",") || !value.includes("--tw-")) return value;
+  const items = value.split(",").map((s) => s.trim());
+  const kept = items.filter((s) => !s.startsWith("--tw-"));
+  return (kept.length ? kept : items).join(", ");
+}
+
+/**
  * Parse CSS string to extract property-value pairs.
  * Handles both flat CSS and nested CSS (v4 style).
  * Returns both the token path and the resolved raw value.
  */
 function parseCssProperties(css: string, tailwind: TailwindContext): ParsedCssProperty[] {
   const properties: ParsedCssProperty[] = [];
+  const initialValues = parsePropertyInitialValues(css);
+  const lookup = (name: string): string | undefined => {
+    const themeVal = tailwind.resolveThemeValue?.(name);
+    if (themeVal && !themeVal.includes("var(")) return themeVal;
+    const initial = initialValues.get(name);
+    if (initial != null && !initial.includes("var(")) return initial;
+    return undefined;
+  };
 
   // Find all CSS property declarations (property: value;) anywhere in the CSS
   const declarationRegex = /([a-z-]+)\s*:\s*([^;{}]+);/gi;
@@ -115,17 +199,33 @@ function parseCssProperties(css: string, tailwind: TailwindContext): ParsedCssPr
     }
     // Handle simple var() references
     else if (originalValue.includes("var(--")) {
-      // Extract the first var() for the token path
-      const varMatch = originalValue.match(/var\(([^)]+)\)/);
-      if (varMatch?.[1]) {
-        tokenPath = varNameToTokenPath(varMatch[1]);
-      }
+      const firstVarName = originalValue.match(/var\(\s*(--[\w-]+)/)?.[1] ?? "";
 
-      // Resolve ALL var() references in the value to get the raw value
-      rawValue = resolveCssVariable(originalValue, tailwind);
+      if (firstVarName.startsWith("--tw-")) {
+        // Tailwind v4 internal plumbing (paired line-height, border-style,
+        // transition defaults, ring/shadow system). Resolve to a concrete value
+        // via @property initial values + theme; drop it if it stays unrepresentable.
+        const resolved = resolveVarValue(originalValue, lookup);
+        if (isUnrepresentableValue(resolved)) continue;
+        tokenPath = resolved;
+        rawValue = resolved;
+      } else {
+        // Extract the first var() for the token path
+        const varMatch = originalValue.match(/var\(([^)]+)\)/);
+        if (varMatch?.[1]) {
+          tokenPath = varNameToTokenPath(varMatch[1]);
+        }
+
+        // Resolve ALL var() references in the value to get the raw value
+        rawValue = resolveCssVariable(originalValue, tailwind);
+      }
     }
 
-    properties.push({ propName, tokenPath, rawValue });
+    properties.push({
+      propName,
+      tokenPath: stripInternalListItems(tokenPath),
+      rawValue: stripInternalListItems(rawValue),
+    });
   }
 
   return properties;

@@ -21,6 +21,19 @@ const DEFAULT_THEME_OUTPUT = "tailwind-theme.css";
 
 const cwd = process.cwd();
 
+/**
+ * Create a Tailwind context, optionally from a user-provided v4 CSS theme file
+ * (`--tw`). Without it the default Tailwind theme is used, so custom design tokens
+ * (e.g. shadcn's `bg-primary`) only resolve when their `@theme` file is supplied.
+ */
+async function loadTwContext(themePath: string | undefined, baseCwd: string) {
+  if (themePath) {
+    const css = readFileSync(resolve(baseCwd, themePath), "utf-8");
+    return createTailwindContext(css);
+  }
+  return createTailwindContext();
+}
+
 const withTw = z.object({ tailwind: z.string() });
 const withWrite = z.object({ write: z.boolean() });
 const rewriteOptions = z.object({ shorthands: z.boolean() }).partial();
@@ -53,10 +66,9 @@ cli
   .action(async (file, _options) => {
     const options = rewriteFlags.parse(_options);
     const cwdResolved = resolve(options.cwd);
-    const content = readFileSync(join(cwdResolved, file), "utf-8");
+    const content = readFileSync(resolve(cwdResolved, file), "utf-8");
 
-    // In v4, we use the default Tailwind CSS config
-    const tw = await createTailwindContext();
+    const tw = await loadTwContext(options.tailwind, cwdResolved);
     const configPath = options.config;
 
     const ctx = await loadPandaContext({ cwd: cwdResolved, configPath, file });
@@ -65,7 +77,7 @@ cli
 
     const result = rewriteTwFileContentToPanda(content, file, tw.context, panda, mergeCss, options as RewriteOptions);
     if (options.write) {
-      await writeFile(join(cwdResolved, file), result.output);
+      await writeFile(resolve(cwdResolved, file), result.output);
       console.log(`✓ Converted ${file}`);
 
       // Generate theme CSS if requested
@@ -94,10 +106,9 @@ cli
   .option("--cwd <cwd>", "Current working directory", { default: cwd })
   .action(async (file, _options) => {
     const options = extractFlags.parse(_options);
-    const content = readFileSync(join(cwd, file), "utf-8");
+    const content = readFileSync(resolve(cwd, file), "utf-8");
 
-    // In v4, we use the default Tailwind CSS config
-    const tw = await createTailwindContext();
+    const tw = await loadTwContext(options.tailwind, resolve(options.cwd));
     const configPath = options.config;
 
     const ctx = await loadPandaContext({ cwd, configPath, file });
@@ -236,7 +247,7 @@ cli
       .parse(_options);
 
     const cwdResolved = resolve(options.cwd);
-    const content = readFileSync(join(cwdResolved, file), "utf-8");
+    const content = readFileSync(resolve(cwdResolved, file), "utf-8");
 
     // Load panda context if available (for shorthands)
     let panda: ReturnType<typeof createPandaContext> | undefined;
@@ -308,10 +319,10 @@ cli
       .parse(_options);
 
     const cwdResolved = resolve(options.cwd);
-    const content = readFileSync(join(cwdResolved, file), "utf-8");
+    const content = readFileSync(resolve(cwdResolved, file), "utf-8");
 
     // Create contexts
-    const tw = await createTailwindContext();
+    const tw = await loadTwContext(options.tailwind, cwdResolved);
     const ctx = await loadPandaContext({ cwd: cwdResolved, configPath: options.config, file });
     const panda = ctx.context;
 
