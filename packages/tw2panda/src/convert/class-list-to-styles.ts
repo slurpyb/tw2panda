@@ -346,8 +346,12 @@ export const twClassListToPandaStyles = (classList: Set<string>, tailwind: Tailw
     tokens.forEach((match) => {
       const { propName, tokenName, rawValue, classInfo } = match;
 
-      // Format the value with token() syntax if applicable
-      const formattedValue = formatTokenValue(propName, tokenName, rawValue);
+      // `!important` must sit at the very end of the value, never inside a var() fallback
+      // (which would be invalid CSS). Strip any copies Tailwind baked into the raw value,
+      // format the token, then re-apply exactly once from the class's importance flag.
+      const cleanRawValue = rawValue.replace(/\s*!important/gi, "");
+      let formattedValue = formatTokenValue(propName, tokenName, cleanRawValue);
+      if (classInfo.isImportant) formattedValue += " !important";
 
       // dark:text-sky-400 -> { _dark: { color: "token(colors.sky.400, #38bdf8)" } }
       // md:p-4 -> { md: { padding: "token(spacing.4, 1rem)" } }
@@ -412,13 +416,10 @@ function getMatchingTwCandidates(className: string, tailwind: TailwindContext, p
     }
     if (!tokenName) return;
 
-    let finalRawValue = rawValue;
-    if (classInfo.isImportant) {
-      tokenName += "!";
-      finalRawValue += " !important";
-    }
-
-    tokens.push({ propName, tokenName, rawValue: finalRawValue, classInfo });
+    // `!important` is not appended here: Tailwind already emits it in the extracted CSS
+    // for `!`-suffixed classes, and it's applied once (in the right place) downstream in
+    // `twClassListToPandaStyles`. Importance is carried by `classInfo.isImportant`.
+    tokens.push({ propName, tokenName, rawValue, classInfo });
   });
 
   return tokens;

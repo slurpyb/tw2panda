@@ -94,6 +94,15 @@ describe("extract-tw-class-list", () => {
     // Verify important flag is set
     const importantStyles = stylesList.filter((s) => s.match.classInfo.isImportant);
     expect(importantStyles.length).toBeGreaterThan(0);
+
+    // `!important` is applied exactly once, at the very end of the value — never doubled
+    // and never inside a var() fallback (which would be invalid CSS).
+    const importantValues = importantStyles.map((s) => Object.values(s.styles)[0] as string);
+    for (const value of importantValues) {
+      expect(value.match(/!important/g)).toHaveLength(1);
+      expect(value.endsWith("!important")).toBe(true);
+      expect(value).not.toMatch(/!important\s*\)/);
+    }
   });
 
   test("important modifier (v3 syntax with ! at beginning)", async () => {
