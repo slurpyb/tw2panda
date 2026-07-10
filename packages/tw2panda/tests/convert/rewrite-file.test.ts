@@ -21,7 +21,7 @@ describe("rewrite-tw-file-content-to-panda", () => {
   });
 
   test("samples/button.ts - basic transformation", async () => {
-    const panda = createPandaContext();
+    const panda = await createPandaContext();
     const { mergeCss } = createMergeCss({
       utility: panda.utility,
       conditions: panda.conditions,
@@ -45,7 +45,7 @@ describe("rewrite-tw-file-content-to-panda", () => {
   });
 
   test("samples/button.ts - converted output is valid & lossless (caveat fixes)", async () => {
-    const panda = createPandaContext();
+    const panda = await createPandaContext();
     const { mergeCss } = createMergeCss({ utility: panda.utility, conditions: panda.conditions, hash: false });
 
     const { output } = rewriteTwFileContentToPanda(buttonRaw, "samples/button.ts", tailwindContext, panda, mergeCss);
@@ -76,7 +76,7 @@ describe("rewrite-tw-file-content-to-panda", () => {
     // the same effect the CLI's `--tw <file>` option provides in real use.
     const twThemed = (await createTailwindContext(shadcnThemeRaw)).context;
 
-    const panda = createPandaContext();
+    const panda = await createPandaContext();
     const { mergeCss } = createMergeCss({ utility: panda.utility, conditions: panda.conditions, hash: false });
 
     const input = [
@@ -103,7 +103,7 @@ describe("rewrite-tw-file-content-to-panda", () => {
   });
 
   test("compoundVariants: class keys become css, condition refs are preserved", async () => {
-    const panda = createPandaContext();
+    const panda = await createPandaContext();
     const { mergeCss } = createMergeCss({ utility: panda.utility, conditions: panda.conditions, hash: false });
 
     const input = [
@@ -131,7 +131,7 @@ describe("rewrite-tw-file-content-to-panda", () => {
   });
 
   test("JSX expressions", async () => {
-    const panda = createPandaContext();
+    const panda = await createPandaContext();
     const { mergeCss } = createMergeCss({
       utility: panda.utility,
       conditions: panda.conditions,
@@ -158,7 +158,7 @@ describe("rewrite-tw-file-content-to-panda", () => {
   });
 
   test("NoSubstitutionTemplateLiteral", async () => {
-    const panda = createPandaContext();
+    const panda = await createPandaContext();
     const { mergeCss } = createMergeCss({
       utility: panda.utility,
       conditions: panda.conditions,
@@ -182,7 +182,7 @@ describe("rewrite-tw-file-content-to-panda", () => {
   });
 
   test("TemplateLiteral with condition", async () => {
-    const panda = createPandaContext();
+    const panda = await createPandaContext();
     const { mergeCss } = createMergeCss({
       utility: panda.utility,
       conditions: panda.conditions,
@@ -206,7 +206,7 @@ describe("rewrite-tw-file-content-to-panda", () => {
   });
 
   test("Simple React component", async () => {
-    const panda = createPandaContext();
+    const panda = await createPandaContext();
     const { mergeCss } = createMergeCss({
       utility: panda.utility,
       conditions: panda.conditions,
@@ -232,7 +232,7 @@ describe("rewrite-tw-file-content-to-panda", () => {
   });
 
   test("dark mode classes", async () => {
-    const panda = createPandaContext();
+    const panda = await createPandaContext();
     const { mergeCss } = createMergeCss({
       utility: panda.utility,
       conditions: panda.conditions,

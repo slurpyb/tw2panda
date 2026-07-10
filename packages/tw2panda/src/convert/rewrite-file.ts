@@ -2,8 +2,9 @@ import { PandaContext } from "../panda/context";
 import { TailwindContext } from "../tailwind/types";
 import { prettify } from "../shared/maybe-pretty";
 import MagicString from "magic-string";
-import { CallExpression, Node, SourceFile, ts } from "ts-morph";
+import { CallExpression, Node, ts } from "ts-morph";
 import { RewriteOptions, StyleObject, TwResultItem } from "../shared/types";
+import { parseSourceFile } from "./parse-source-file";
 import { twClassListToPandaStyles } from "./class-list-to-styles";
 import { mapToShorthands } from "../panda/map-to-shorthands";
 import { getStringLiteralText, isStringLike } from "./find-class-candidates";
@@ -131,7 +132,7 @@ export function rewriteTwFileContentToPanda(
   mergeCss: (...styles: StyleObject[]) => StyleObject,
   options: RewriteOptions = { shorthands: true },
 ) {
-  const sourceFile = panda.project.addSourceFile(filePath, content) as any as SourceFile;
+  const sourceFile = parseSourceFile(filePath, content);
 
   const code = sourceFile.getFullText();
   const magicStr = new MagicString(code);

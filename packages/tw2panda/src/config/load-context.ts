@@ -1,5 +1,5 @@
 import { loadConfigAndCreateContext } from "@pandacss/node";
-import { PandaContext, createPandaContext } from "../panda/context";
+import { createPandaContext } from "../panda/context";
 import { ConfigFileOptions, findPandaConfig, findTailwindConfig } from "./find-config";
 import { createTailwindContext } from "../tailwind/context";
 
@@ -31,11 +31,11 @@ export async function loadPandaContext(options: ConfigFileOptions) {
   const filePath = options.configPath ?? findPandaConfig({ from: options.file ?? options.cwd });
 
   if (!filePath) {
-    return { context: createPandaContext() as PandaContext, filePath };
+    return { context: await createPandaContext(), filePath };
   }
 
   return {
-    context: (await loadConfigAndCreateContext({ configPath: filePath, cwd: options.cwd })) as any as PandaContext,
+    context: await loadConfigAndCreateContext({ configPath: filePath, cwd: options.cwd }),
     filePath,
   };
 }

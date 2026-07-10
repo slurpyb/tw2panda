@@ -73,7 +73,7 @@ cli
 
     const ctx = await loadPandaContext({ cwd: cwdResolved, configPath, file });
     const panda = ctx.context;
-    const { mergeCss } = createMergeCss(Object.assign(panda, { hash: false }));
+    const { mergeCss } = createMergeCss({ utility: panda.utility, conditions: panda.conditions, hash: false });
 
     const result = rewriteTwFileContentToPanda(content, file, tw.context, panda, mergeCss, options as RewriteOptions);
     if (options.write) {
@@ -113,7 +113,7 @@ cli
 
     const ctx = await loadPandaContext({ cwd, configPath, file });
     const panda = ctx.context;
-    const { mergeCss } = createMergeCss(Object.assign(panda, { hash: false }));
+    const { mergeCss } = createMergeCss({ utility: panda.utility, conditions: panda.conditions, hash: false });
 
     const list = extractTwFileClassList(content, tw.context, panda, mergeCss, options as RewriteOptions);
     console.log(list.map(({ node, ...item }) => item));
@@ -182,7 +182,7 @@ cli
 
     // Initialize contexts
     const tw = await createTailwindContext();
-    const panda = createPandaContext();
+    const panda = await createPandaContext();
     const { mergeCss } = createMergeCss({
       utility: panda.utility,
       conditions: panda.conditions,
@@ -250,7 +250,7 @@ cli
     const content = readFileSync(resolve(cwdResolved, file), "utf-8");
 
     // Load panda context if available (for shorthands)
-    let panda: ReturnType<typeof createPandaContext> | undefined;
+    let panda: Awaited<ReturnType<typeof createPandaContext>> | undefined;
     if (options.shorthands) {
       const ctx = await loadPandaContext({ cwd: cwdResolved, configPath: options.config, file });
       panda = ctx.context;

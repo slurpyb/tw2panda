@@ -28,7 +28,7 @@ describe("extract-tw-class-list", () => {
       "font-medium",
     ]);
 
-    const panda = createPandaContext();
+    const panda = await createPandaContext();
 
     const stylesList = twClassListToPandaStyles(classList, tailwindContext, panda);
 
@@ -45,7 +45,7 @@ describe("extract-tw-class-list", () => {
   test("classes with variants", async () => {
     const classList = new Set(["hover:bg-red-500", "focus:outline-none", "disabled:opacity-50"]);
 
-    const panda = createPandaContext();
+    const panda = await createPandaContext();
 
     const stylesList = twClassListToPandaStyles(classList, tailwindContext, panda);
 
@@ -63,7 +63,7 @@ describe("extract-tw-class-list", () => {
   });
 
   test("extractTwFileClassList from file content", async () => {
-    const panda = createPandaContext();
+    const panda = await createPandaContext();
     const { mergeCss } = createMergeCss({
       utility: panda.utility,
       conditions: panda.conditions,
@@ -87,7 +87,7 @@ describe("extract-tw-class-list", () => {
   test("important modifier (v4 syntax with ! at end)", async () => {
     const classList = new Set(["flex!", "bg-red-500!"]);
 
-    const panda = createPandaContext();
+    const panda = await createPandaContext();
 
     const stylesList = twClassListToPandaStyles(classList, tailwindContext, panda);
 
@@ -99,7 +99,7 @@ describe("extract-tw-class-list", () => {
   test("important modifier (v3 syntax with ! at beginning)", async () => {
     const classList = new Set(["!flex", "!bg-red-500"]);
 
-    const panda = createPandaContext();
+    const panda = await createPandaContext();
 
     const stylesList = twClassListToPandaStyles(classList, tailwindContext, panda);
 
@@ -111,7 +111,7 @@ describe("extract-tw-class-list", () => {
   test("dark mode classes", async () => {
     const classList = new Set(["dark:bg-slate-800", "dark:text-white"]);
 
-    const panda = createPandaContext();
+    const panda = await createPandaContext();
 
     const stylesList = twClassListToPandaStyles(classList, tailwindContext, panda);
 
@@ -128,7 +128,7 @@ describe("extract-tw-class-list", () => {
   test("responsive classes", async () => {
     const classList = new Set(["md:flex", "lg:hidden"]);
 
-    const panda = createPandaContext();
+    const panda = await createPandaContext();
 
     const stylesList = twClassListToPandaStyles(classList, tailwindContext, panda);
 

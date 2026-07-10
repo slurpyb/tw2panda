@@ -1,5 +1,4 @@
 import { describe, test, expect } from "vitest";
-import { createPandaContext } from "../../src/panda/context";
 import { findTwClassCandidates } from "../../src/convert/find-class-candidates";
 import { initialInputList } from "../../../../demo-code-sample";
 // @ts-expect-error
@@ -7,8 +6,7 @@ import buttonRaw from "../../samples/button?raw";
 
 describe("find-tw-class-candidates", () => {
   test("samples/button.ts", () => {
-    const panda = createPandaContext();
-    const { sourceFile, nodes } = findTwClassCandidates(buttonRaw, panda);
+    const { sourceFile, nodes } = findTwClassCandidates(buttonRaw);
 
     expect(sourceFile.getFilePath()).toMatchInlineSnapshot('"/App.tsx"');
     expect(Array.from(nodes).map((node) => node.getLiteralText())).toMatchInlineSnapshot(`
@@ -33,23 +31,22 @@ describe("find-tw-class-candidates", () => {
   });
 
   test("Playground defaultCode", () => {
-    const panda = createPandaContext();
-    const { sourceFile, nodes } = findTwClassCandidates(initialInputList["tw-App.tsx"], panda);
+    const { sourceFile, nodes } = findTwClassCandidates(initialInputList["tw-App.tsx"]);
 
     expect(sourceFile.getFilePath()).toMatchInlineSnapshot('"/App.tsx"');
     expect(Array.from(nodes).map((node) => node.getLiteralText())).toMatchInlineSnapshot(`
-        [
-          "md:flex bg-slate-100 rounded-xl p-8 md:p-0 dark:bg-slate-800",
-          "w-24 h-24 md:w-48 md:h-auto md:rounded-none rounded-full mx-auto",
-          "/sarah-dayan.jpg",
-          "384",
-          "512",
-          "pt-6 md:p-8 text-center md:text-left space-y-4",
-          "text-lg font-medium",
-          "font-medium",
-          "text-sky-500 dark:text-sky-400",
-          "text-slate-700 dark:text-slate-500",
-        ]
-      `);
+      [
+        "md:flex bg-slate-100 rounded-xl p-8 md:p-0 dark:bg-slate-800",
+        "w-24 h-24 md:w-48 md:h-auto md:rounded-none rounded-full mx-auto",
+        "/sarah-dayan.jpg",
+        "384",
+        "512",
+        "pt-6 md:p-8 text-center md:text-left space-y-4",
+        "text-lg font-medium",
+        "font-medium",
+        "text-sky-500 dark:text-sky-400",
+        "text-slate-700 dark:text-slate-500",
+      ]
+    `);
   });
 });

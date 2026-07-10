@@ -4,15 +4,18 @@ import { createPandaContext } from "../panda/context";
 import { mapToShorthands } from "../panda/map-to-shorthands";
 import { createTailwindContext } from "../tailwind/context";
 import { twClassListToPandaStyles } from "./class-list-to-styles";
-import { RewriteOptions } from "../shared/types";
+import { RewriteOptions, StyleObject } from "../shared/types";
 
-export async function twClassListToPanda(classListString: string, options: RewriteOptions = { shorthands: true }) {
+export async function twClassListToPanda(
+  classListString: string,
+  options: RewriteOptions = { shorthands: true },
+): Promise<StyleObject | undefined> {
   const classList = new Set(classListString.split(" "));
 
   const tw = await createTailwindContext();
   const tailwind = tw.context;
 
-  const panda = createPandaContext();
+  const panda = await createPandaContext();
   const { mergeCss } = createMergeCss({
     utility: panda.utility,
     conditions: panda.conditions,

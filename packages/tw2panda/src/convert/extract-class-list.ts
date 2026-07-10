@@ -18,7 +18,7 @@ export const extractTwFileClassList = (
   mergeCss: (...styles: StyleObject[]) => StyleObject,
   options: RewriteOptions = { shorthands: true },
 ) => {
-  const { nodes } = findTwClassCandidates(content, panda);
+  const { nodes } = findTwClassCandidates(content);
   const resultList = [] as TwResultItem[];
   if (!nodes.size) return resultList;
 
